@@ -202,4 +202,142 @@ struct FlightPlanViewModelTests {
         #expect(vm.formattedDistance != nil)
         #expect(vm.formattedDistance?.contains("NM") == true)
     }
+
+    @Test func formattedETEAfterPlan() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "KPAO"
+        vm.destinationICAO = "KSQL"
+        await vm.createFlightPlan()
+
+        // ETE should be formatted as minutes (short flight)
+        #expect(vm.formattedETE != nil)
+        #expect(vm.formattedETE?.contains("m") == true)
+    }
+
+    // MARK: - Fuel Calculation
+
+    @Test func fuelIsNilWhenNoBurnRate() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "KPAO"
+        vm.destinationICAO = "KSQL"
+        await vm.createFlightPlan()
+
+        // Default fuel burn rate is nil, so estimated fuel should be nil
+        #expect(vm.activePlan?.estimatedFuel == nil)
+        #expect(vm.formattedFuel == nil)
+    }
+
+    // MARK: - Speed and Altitude Formatting
+
+    @Test func formattedSpeedAndAltitude() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "KPAO"
+        vm.destinationICAO = "KSQL"
+        await vm.createFlightPlan()
+
+        #expect(vm.formattedSpeed != nil)
+        #expect(vm.formattedSpeed?.contains("kts") == true)
+        #expect(vm.formattedSpeed?.contains("TAS") == true)
+
+        #expect(vm.formattedAltitude != nil)
+        #expect(vm.formattedAltitude?.contains("ft MSL") == true)
+    }
+
+    @Test func formattedValuesNilBeforePlan() {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        #expect(vm.formattedDistance == nil)
+        #expect(vm.formattedETE == nil)
+        #expect(vm.formattedFuel == nil)
+        #expect(vm.formattedAltitude == nil)
+        #expect(vm.formattedSpeed == nil)
+    }
+
+    // MARK: - Airport Resolution
+
+    @Test func departureAirportResolvedAfterPlan() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "KPAO"
+        vm.destinationICAO = "KSQL"
+        await vm.createFlightPlan()
+
+        #expect(vm.departureAirport != nil)
+        #expect(vm.departureAirport?.icao == "KPAO")
+        #expect(vm.destinationAirport != nil)
+        #expect(vm.destinationAirport?.icao == "KSQL")
+    }
+
+    @Test func airportsNilAfterClear() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "KPAO"
+        vm.destinationICAO = "KSQL"
+        await vm.createFlightPlan()
+        #expect(vm.departureAirport != nil)
+
+        vm.clearFlightPlan()
+
+        #expect(vm.departureAirport == nil)
+        #expect(vm.destinationAirport == nil)
+    }
+
+    // MARK: - Input Handling
+
+    @Test func icaoInputIsUppercased() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "kpao"  // lowercase
+        vm.destinationICAO = "ksql"
+
+        await vm.createFlightPlan()
+
+        // Flight plan departure should be uppercased
+        #expect(vm.activePlan?.departure == "KPAO")
+        #expect(vm.activePlan?.destination == "KSQL")
+    }
+
+    @Test func icaoInputIsTrimmed() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "  KPAO  "  // whitespace
+        vm.destinationICAO = "  KSQL  "
+
+        await vm.createFlightPlan()
+
+        #expect(vm.activePlan?.departure == "KPAO")
+        #expect(vm.activePlan?.destination == "KSQL")
+    }
+
+    // MARK: - Default Values
+
+    @Test func defaultCruiseValues() async {
+        let db = Self.makeMockDB()
+        let vm = FlightPlanViewModel(databaseManager: db)
+
+        vm.departureICAO = "KPAO"
+        vm.destinationICAO = "KSQL"
+        await vm.createFlightPlan()
+
+        guard let plan = vm.activePlan else {
+            #expect(Bool(false), "Plan should exist")
+            return
+        }
+
+        // Default cruise speed is 100 knots
+        #expect(plan.cruiseSpeed == 100.0)
+        // Default cruise altitude is 3000 feet MSL
+        #expect(plan.cruiseAltitude == 3000)
+    }
 }

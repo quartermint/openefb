@@ -55,4 +55,8 @@ final class MockDatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
     func importNASRData(from url: URL, progress: @escaping (Double) -> Void) async throws {
         // no-op for tests
     }
+
+    func loadSeedDataIfNeeded() {
+        // no-op for tests
+    }
 }

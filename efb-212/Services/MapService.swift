@@ -81,23 +81,36 @@ final class MapService: NSObject, ObservableObject {
 
     // MARK: - VFR Sectional Overlay
 
+    /// Current sectional overlay opacity (0.0 fully transparent, 1.0 fully opaque).
+    /// Adjustable by users via Settings > Chart Downloads.
+    @Published var sectionalOpacity: Double = 0.85
+
+    /// Tracks active sectional overlay source/layer identifiers for cleanup.
+    private var activeSectionalIDs: [(sourceID: String, layerID: String)] = []
+
     /// Add a VFR sectional chart overlay from an MBTiles file.
-    /// - Parameter mbtilesPath: URL to the local .mbtiles file containing raster tiles.
-    func addSectionalOverlay(mbtilesPath: URL) {
+    /// Each region gets its own source/layer so multiple sectionals can be displayed simultaneously.
+    /// - Parameters:
+    ///   - mbtilesPath: URL to the local .mbtiles file containing raster tiles.
+    ///   - regionID: Unique region identifier used to namespace the source/layer.
+    func addSectionalOverlay(mbtilesPath: URL, regionID: String = "default") {
         guard let mapView = mapView, let style = mapView.style else { return }
 
-        // Remove existing sectional source/layer if present
-        if let existingLayer = style.layer(withIdentifier: "sectional-raster") {
+        let sourceID = "sectional-source-\(regionID)"
+        let layerID = "sectional-raster-\(regionID)"
+
+        // Remove existing source/layer for this region if present
+        if let existingLayer = style.layer(withIdentifier: layerID) {
             style.removeLayer(existingLayer)
         }
-        if let existingSource = style.source(withIdentifier: "sectional-source") {
+        if let existingSource = style.source(withIdentifier: sourceID) {
             style.removeSource(existingSource)
         }
 
         // MBTiles served via mbtiles:// URL scheme supported by MapLibre
         let tileURLTemplate = "mbtiles://\(mbtilesPath.path)"
         let source = MLNRasterTileSource(
-            identifier: "sectional-source",
+            identifier: sourceID,
             tileURLTemplates: [tileURLTemplate],
             options: [
                 .tileSize: 256,
@@ -107,9 +120,70 @@ final class MapService: NSObject, ObservableObject {
         )
         style.addSource(source)
 
-        let rasterLayer = MLNRasterStyleLayer(identifier: "sectional-raster", source: source)
-        rasterLayer.rasterOpacity = NSExpression(forConstantValue: 0.85)
+        let rasterLayer = MLNRasterStyleLayer(identifier: layerID, source: source)
+        rasterLayer.rasterOpacity = NSExpression(forConstantValue: sectionalOpacity)
         style.addLayer(rasterLayer)
+
+        // Track for cleanup
+        if !activeSectionalIDs.contains(where: { $0.sourceID == sourceID }) {
+            activeSectionalIDs.append((sourceID: sourceID, layerID: layerID))
+        }
+    }
+
+    /// Remove a specific sectional overlay by region ID.
+    /// - Parameter regionID: The region identifier to remove.
+    func removeSectionalOverlay(regionID: String) {
+        guard let style = mapView?.style else { return }
+
+        let sourceID = "sectional-source-\(regionID)"
+        let layerID = "sectional-raster-\(regionID)"
+
+        if let layer = style.layer(withIdentifier: layerID) {
+            style.removeLayer(layer)
+        }
+        if let source = style.source(withIdentifier: sourceID) {
+            style.removeSource(source)
+        }
+
+        activeSectionalIDs.removeAll { $0.sourceID == sourceID }
+    }
+
+    /// Remove all sectional overlays from the map.
+    func removeAllSectionalOverlays() {
+        guard let style = mapView?.style else { return }
+
+        for ids in activeSectionalIDs {
+            if let layer = style.layer(withIdentifier: ids.layerID) {
+                style.removeLayer(layer)
+            }
+            if let source = style.source(withIdentifier: ids.sourceID) {
+                style.removeSource(source)
+            }
+        }
+        activeSectionalIDs.removeAll()
+    }
+
+    /// Updates the opacity for all active sectional overlay layers.
+    /// - Parameter opacity: Value from 0.0 (transparent) to 1.0 (opaque).
+    func setSectionalOpacity(_ opacity: Double) {
+        sectionalOpacity = opacity
+        guard let style = mapView?.style else { return }
+
+        for ids in activeSectionalIDs {
+            if let rasterLayer = style.layer(withIdentifier: ids.layerID) as? MLNRasterStyleLayer {
+                rasterLayer.rasterOpacity = NSExpression(forConstantValue: opacity)
+            }
+        }
+    }
+
+    /// Load sectional overlays for all downloaded chart regions.
+    /// Queries ChartManager for downloaded MBTiles files and adds each as a raster overlay.
+    /// - Parameter chartManager: The ChartManager actor to query for downloaded chart paths.
+    func loadDownloadedSectionals(from chartManager: ChartManager) async {
+        let paths = await chartManager.downloadedChartPaths()
+        for (regionID, mbtilesURL) in paths {
+            addSectionalOverlay(mbtilesPath: mbtilesURL, regionID: regionID)
+        }
     }
 
     // MARK: - Layer Visibility
@@ -127,9 +201,12 @@ final class MapService: NSObject, ObservableObject {
     func updateVisibleLayers(for zoomLevel: Double) {
         guard let style = mapView?.style else { return }
 
-        // Sectional overlay
-        if let sectionalLayer = style.layer(withIdentifier: "sectional-raster") {
-            sectionalLayer.isVisible = activeLayers.contains(.sectional)
+        // Sectional overlay — check all active sectional layers
+        let showSectional = activeLayers.contains(.sectional)
+        for ids in activeSectionalIDs {
+            if let sectionalLayer = style.layer(withIdentifier: ids.layerID) {
+                sectionalLayer.isVisible = showSectional
+            }
         }
 
         // Airport annotations visibility is managed via annotation filtering,

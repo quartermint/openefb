@@ -30,6 +30,7 @@ final class MapViewModel: ObservableObject {
     // MARK: - Dependencies
 
     private let databaseManager: any DatabaseManagerProtocol
+    private let locationManager: (any LocationManagerProtocol)?
     let mapService: MapService
     private var cancellables = Set<AnyCancellable>()
 
@@ -42,16 +43,47 @@ final class MapViewModel: ObservableObject {
 
     // MARK: - Init
 
-    init(databaseManager: any DatabaseManagerProtocol, mapService: MapService) {
+    init(
+        databaseManager: any DatabaseManagerProtocol,
+        mapService: MapService,
+        locationManager: (any LocationManagerProtocol)? = nil
+    ) {
         self.databaseManager = databaseManager
         self.mapService = mapService
+        self.locationManager = locationManager
         setupMapServiceDelegate()
+        subscribeToLocationUpdates()
+        loadInitialAirports()
     }
 
     // MARK: - Setup
 
     private func setupMapServiceDelegate() {
         mapService.delegate = self
+    }
+
+    /// Subscribe to location updates to render ownship position on the map.
+    private func subscribeToLocationUpdates() {
+        guard let locationManager else { return }
+        locationManager.locationPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] location in
+                guard let self else { return }
+                self.mapService.updateOwnship(
+                    location: location,
+                    heading: locationManager.heading
+                )
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Load airports around the default map center on startup.
+    private func loadInitialAirports() {
+        let center = mapService.currentCenter
+        let radiusNM = estimatedRadiusNM(for: mapService.currentZoom)
+        Task { [weak self] in
+            await self?.loadAirportsForRegion(center: center, radiusNM: radiusNM)
+        }
     }
 
     // MARK: - Airport Loading

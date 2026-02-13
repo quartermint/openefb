@@ -25,6 +25,10 @@ struct ContentView: View {
     @State private var weatherViewModel: WeatherViewModel?
     @State private var showFlightPlan: Bool = false
 
+    // Nearest airport (emergency feature)
+    @State private var nearestAirportViewModel: NearestAirportViewModel?
+    @State private var showNearestAirport: Bool = false
+
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
@@ -57,7 +61,8 @@ struct ContentView: View {
             if mapViewModel == nil {
                 mapViewModel = MapViewModel(
                     databaseManager: appState.databaseManager,
-                    mapService: mapService
+                    mapService: mapService,
+                    locationManager: appState.locationManager
                 )
             }
             if flightPlanViewModel == nil {
@@ -68,6 +73,12 @@ struct ContentView: View {
             if weatherViewModel == nil {
                 weatherViewModel = WeatherViewModel(
                     weatherService: appState.weatherService
+                )
+            }
+            if nearestAirportViewModel == nil {
+                nearestAirportViewModel = NearestAirportViewModel(
+                    databaseManager: appState.databaseManager,
+                    locationManager: appState.locationManager
                 )
             }
         }
@@ -81,6 +92,11 @@ struct ContentView: View {
         .sheet(isPresented: $showFlightPlan) {
             if let fpvm = flightPlanViewModel, let wvm = weatherViewModel {
                 FlightPlanView(viewModel: fpvm, weatherViewModel: wvm)
+            }
+        }
+        .sheet(isPresented: $showNearestAirport) {
+            if let navm = nearestAirportViewModel {
+                NearestAirportView(viewModel: navm, weatherViewModel: weatherViewModel)
             }
         }
         .onChange(of: flightPlanViewModel?.activePlan) {
@@ -122,6 +138,25 @@ struct ContentView: View {
                             .clipShape(Circle())
                     }
                     .padding(.leading, 16)
+                    .padding(.top, 60)
+
+                    // Nearest airport button — emergency/safety feature
+                    Button {
+                        showNearestAirport = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                            Text("NEAREST")
+                                .font(.caption)
+                                .fontWeight(.black)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(.red)
+                        .clipShape(Capsule())
+                    }
                     .padding(.top, 60)
 
                     Spacer()

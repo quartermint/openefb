@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		172759092F3F856F007A1A80 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AA0001012F3E7000007A1A80 /* GRDB */; };
+		1727590A2F3F856F007A1A80 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = AA0001022F3E7000007A1A80 /* MapLibre */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		172758742F3E6979007A1A80 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1727590A2F3F856F007A1A80 /* MapLibre in Frameworks */,
+				172759092F3F856F007A1A80 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -198,7 +205,7 @@
 			mainGroup = 1727585B2F3E6978007A1A80;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB" */,
 				AA0002022F3E7000007A1A80 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -406,8 +413,8 @@
 				DEVELOPMENT_TEAM = SKGLKG576D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "OpenEFB needs your location to display your position on the aviation map and calculate distances to airports and waypoints.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -439,8 +446,8 @@
 				DEVELOPMENT_TEAM = SKGLKG576D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "OpenEFB needs your location to display your position on the aviation map and calculate distances to airports and waypoints.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -588,7 +595,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+		AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -609,7 +616,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		AA0001012F3E7000007A1A80 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			package = AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 		AA0001022F3E7000007A1A80 /* MapLibre */ = {

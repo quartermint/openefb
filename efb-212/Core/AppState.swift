@@ -59,6 +59,17 @@ final class AppState: ObservableObject {
     nonisolated let databaseManager: any DatabaseManagerProtocol
     nonisolated let weatherService: any WeatherServiceProtocol
 
+    /// PowerManager for battery monitoring — created internally.
+    let powerManager = PowerManager()
+
+    private var cancellables = Set<AnyCancellable>()
+
+    /// 1 m/s = 1.94384 knots
+    private static let metersPerSecondToKnots: Double = 1.94384
+
+    /// 1 meter = 3.28084 feet
+    private static let metersToFeet: Double = 3.28084
+
     // MARK: - Init
 
     init(
@@ -69,5 +80,69 @@ final class AppState: ObservableObject {
         self.locationManager = locationManager
         self.databaseManager = databaseManager
         self.weatherService = weatherService
+
+        // Load seed airports on launch (idempotent)
+        databaseManager.loadSeedDataIfNeeded()
+
+        subscribeToLocationUpdates()
+        subscribeToPowerManager()
+    }
+
+    // MARK: - Location Subscription
+
+    /// Subscribes to location updates and pipes aviation-unit values into published state.
+    /// This drives the InstrumentStrip (GS, ALT, VS, TRK) in real-time.
+    private func subscribeToLocationUpdates() {
+        var previousLocation: CLLocation?
+
+        locationManager.locationPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] location in
+                guard let self else { return }
+
+                self.ownshipPosition = location
+                self.gpsAvailable = true
+
+                // Ground speed — knots
+                if location.speed >= 0 {
+                    self.groundSpeed = location.speed * Self.metersPerSecondToKnots
+                }
+
+                // Altitude — feet MSL
+                self.altitude = location.altitude * Self.metersToFeet
+
+                // Track — degrees true (CLLocation.course, -1 if invalid)
+                if location.course >= 0 {
+                    self.track = location.course
+                }
+
+                // Vertical speed — feet per minute from successive samples
+                if let prev = previousLocation {
+                    let timeDelta = location.timestamp.timeIntervalSince(prev.timestamp)
+                    if timeDelta > 0.1 {
+                        let altDeltaFeet = (location.altitude - prev.altitude) * Self.metersToFeet
+                        self.verticalSpeed = (altDeltaFeet / timeDelta) * 60.0  // fpm
+                    }
+                }
+
+                // Update map center to follow ownship
+                self.mapCenter = location.coordinate
+
+                previousLocation = location
+            }
+            .store(in: &cancellables)
+    }
+
+    // MARK: - Power Manager Subscription
+
+    /// Subscribes to PowerManager to keep AppState battery level and power state current.
+    private func subscribeToPowerManager() {
+        powerManager.$batteryLevel
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$batteryLevel)
+
+        powerManager.$powerState
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$powerState)
     }
 }

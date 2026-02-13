@@ -91,11 +91,51 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
         try db.clearWeatherCache()
     }
 
+    // MARK: - Seed Data
+
+    nonisolated private static let seedDataLoadedKey = "com.efb212.seedDataLoaded"
+    nonisolated private static let seedDataVersionKey = "com.efb212.seedDataVersion"
+    nonisolated private static let currentSeedVersion = 1
+
+    /// Whether seed data has already been loaded into the database.
+    nonisolated var isSeedDataLoaded: Bool {
+        UserDefaults.standard.bool(forKey: Self.seedDataLoadedKey)
+            && UserDefaults.standard.integer(forKey: Self.seedDataVersionKey) >= Self.currentSeedVersion
+    }
+
+    /// Load bundled airport seed data into the aviation database.
+    /// This is idempotent — it checks UserDefaults before inserting and skips
+    /// if data for the current seed version is already present.
+    nonisolated func loadSeedData() throws {
+        guard let db = aviationDB else { return }
+        guard !isSeedDataLoaded else { return }
+
+        let airports = AirportSeedData.allAirports()
+        try db.insertAirports(airports)
+
+        UserDefaults.standard.set(true, forKey: Self.seedDataLoadedKey)
+        UserDefaults.standard.set(Self.currentSeedVersion, forKey: Self.seedDataVersionKey)
+
+        let count = try db.airportCount()
+        print("Loaded \(count) airports from seed data (version \(Self.currentSeedVersion))")
+    }
+
+    /// Load seed data if it has not yet been loaded. Safe to call on every launch.
+    nonisolated func loadSeedDataIfNeeded() {
+        do {
+            try loadSeedData()
+        } catch {
+            print("Failed to load seed data: \(error)")
+        }
+    }
+
     // MARK: - NASR Import
 
     nonisolated func importNASRData(from url: URL, progress: @escaping (Double) -> Void) async throws {
-        // NASR import will be implemented when SwiftNASR integration is added.
-        // This is a placeholder that reports completion immediately.
+        // For now, importNASRData loads the bundled seed data.
+        // Future: integrate SwiftNASR for full NASR data import from FAA distribution.
+        progress(0.1)
+        try loadSeedData()
         progress(1.0)
     }
 }

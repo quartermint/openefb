@@ -27,6 +27,9 @@ protocol DatabaseManagerProtocol: Sendable {
 
     // NASR import
     func importNASRData(from url: URL, progress: @escaping (Double) -> Void) async throws
+
+    // Seed data
+    func loadSeedDataIfNeeded()
 }
 
 // MARK: - Location Manager Protocol

@@ -57,6 +57,8 @@ final class PlaceholderDatabaseManager: DatabaseManagerProtocol, @unchecked Send
     func importNASRData(from url: URL, progress: @escaping (Double) -> Void) async throws {
         throw EFBError.nasrImportFailed(underlying: PlaceholderError.notImplemented)
     }
+
+    func loadSeedDataIfNeeded() { /* no-op */ }
 }
 
 // MARK: - PlaceholderWeatherService

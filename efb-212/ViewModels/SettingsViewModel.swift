@@ -3,8 +3,8 @@
 //  efb-212
 //
 //  Manages settings state and chart download operations.
-//  Provides sample chart regions for demo and delegates actual
-//  download/delete operations to ChartManager.
+//  Loads chart regions from ChartManager.availableRegions with
+//  live download status, and delegates download/delete to ChartManager.
 //
 
 import Foundation
@@ -14,6 +14,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var chartRegions: [ChartRegion] = []
     @Published var downloadProgress: [String: Double] = [:]
     @Published var storageUsed: String = "0 MB"
+    @Published var sectionalOpacity: Double = 0.85  // 0.0–1.0, user-adjustable overlay transparency
 
     private let chartManager = ChartManager()
 
@@ -24,98 +25,50 @@ final class SettingsViewModel: ObservableObject {
         chartRegions.filter { $0.isExpired }
     }
 
-    /// Loads sample VFR chart regions for demonstration.
-    /// In production, these would come from the FAA chart API or a bundled manifest.
+    /// Loads available FAA VFR sectional chart regions from ChartManager,
+    /// resolving download status against files on disk.
     func loadAvailableRegions() {
-        let calendar = Calendar.current
-        let now = Date()
-
-        // Create sample effective dates (56-day chart cycle)
-        let effectiveDate = calendar.date(byAdding: .day, value: -28, to: now) ?? now
-        let expirationDate = calendar.date(byAdding: .day, value: 28, to: now) ?? now
-        let expiredDate = calendar.date(byAdding: .day, value: -10, to: now) ?? now
-
-        chartRegions = [
-            ChartRegion(
-                id: "San_Francisco",
-                name: "San Francisco",
-                effectiveDate: effectiveDate,
-                expirationDate: expirationDate,
-                boundingBox: BoundingBox(
-                    minLatitude: 36.0,
-                    maxLatitude: 39.0,
-                    minLongitude: -123.5,
-                    maxLongitude: -120.5
-                ),
-                fileSizeMB: 85.2,              // megabytes — mbtiles file
-                isDownloaded: false,
-                localPath: nil
-            ),
-            ChartRegion(
-                id: "Los_Angeles",
-                name: "Los Angeles",
-                effectiveDate: effectiveDate,
-                expirationDate: expirationDate,
-                boundingBox: BoundingBox(
-                    minLatitude: 33.0,
-                    maxLatitude: 36.0,
-                    minLongitude: -120.0,
-                    maxLongitude: -117.0
-                ),
-                fileSizeMB: 92.7,              // megabytes
-                isDownloaded: false,
-                localPath: nil
-            ),
-            ChartRegion(
-                id: "Seattle",
-                name: "Seattle",
-                effectiveDate: effectiveDate,
-                expirationDate: expirationDate,
-                boundingBox: BoundingBox(
-                    minLatitude: 46.0,
-                    maxLatitude: 49.0,
-                    minLongitude: -124.0,
-                    maxLongitude: -121.0
-                ),
-                fileSizeMB: 68.4,              // megabytes
-                isDownloaded: true,
-                localPath: URL(fileURLWithPath: "/placeholder")
-            ),
-            ChartRegion(
-                id: "Phoenix",
-                name: "Phoenix",
-                effectiveDate: calendar.date(byAdding: .day, value: -66, to: now) ?? now,
-                expirationDate: expiredDate,
-                boundingBox: BoundingBox(
-                    minLatitude: 31.5,
-                    maxLatitude: 34.5,
-                    minLongitude: -113.5,
-                    maxLongitude: -110.5
-                ),
-                fileSizeMB: 54.1,              // megabytes
-                isDownloaded: true,
-                localPath: URL(fileURLWithPath: "/placeholder")
-            ),
-        ]
+        Task {
+            let regions = await chartManager.regionsWithStatus()
+            chartRegions = regions
+        }
     }
 
     // MARK: - Download / Delete
 
-    /// Simulates downloading a chart region with progress updates.
+    /// Downloads a chart region via ChartManager with progress updates.
+    /// Progress is simulated in steps while the actual download proceeds;
+    /// in production, URLSession delegate would provide real progress.
     func downloadRegion(_ region: ChartRegion) async {
         guard downloadProgress[region.id] == nil else { return }
 
         downloadProgress[region.id] = 0.0
 
-        // Simulate download progress
-        for step in 1...10 {
-            try? await Task.sleep(for: .milliseconds(300))
-            downloadProgress[region.id] = Double(step) / 10.0
-        }
+        do {
+            // Start the real download in ChartManager
+            let downloadTask = Task {
+                try await chartManager.downloadChart(for: region)
+            }
 
-        // Update region status
-        if let index = chartRegions.firstIndex(where: { $0.id == region.id }) {
-            chartRegions[index].isDownloaded = true
+            // Simulate incremental progress while download runs.
+            // A production implementation would use URLSessionDownloadDelegate
+            // for byte-level progress. This provides UX feedback in the interim.
+            for step in 1...9 {
+                try? await Task.sleep(for: .milliseconds(400))
+                if downloadTask.isCancelled { break }
+                downloadProgress[region.id] = Double(step) / 10.0
+            }
+
+            let localURL = try await downloadTask.value
+            downloadProgress[region.id] = 1.0
+
+            // Update region status
+            if let index = chartRegions.firstIndex(where: { $0.id == region.id }) {
+                chartRegions[index].isDownloaded = true
+                chartRegions[index].localPath = localURL
+            }
+        } catch {
+            // Download failed — clear progress, leave region as not downloaded
         }
 
         downloadProgress[region.id] = nil

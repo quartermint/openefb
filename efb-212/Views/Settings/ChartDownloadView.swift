@@ -5,6 +5,7 @@
 //  Chart region download management view.
 //  Displays available VFR chart regions with download status, progress,
 //  effective/expiration dates, file sizes, and expired warnings.
+//  Includes opacity slider for sectional chart overlay transparency.
 //
 
 import SwiftUI
@@ -17,6 +18,19 @@ struct ChartDownloadView: View {
             // Storage summary
             Section {
                 LabeledContent("Storage Used", value: viewModel.storageUsed)
+                LabeledContent("Downloaded Charts", value: "\(viewModel.chartRegions.filter(\.isDownloaded).count) of \(viewModel.chartRegions.count)")
+            }
+
+            // Sectional opacity control
+            Section("Chart Overlay") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Sectional Opacity: \(Int(viewModel.sectionalOpacity * 100))%")
+                        .font(.subheadline)
+                    Slider(value: $viewModel.sectionalOpacity, in: 0.0...1.0, step: 0.05)
+                    Text("Adjust transparency of VFR sectional chart overlays on the map.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             // Expired charts warning
@@ -33,7 +47,7 @@ struct ChartDownloadView: View {
             }
 
             // Chart regions
-            Section("Available Regions") {
+            Section("Available Regions (\(viewModel.chartRegions.count) Sectionals)") {
                 ForEach(viewModel.chartRegions) { region in
                     ChartRegionRow(
                         region: region,
@@ -80,6 +94,13 @@ struct ChartRegionRow: View {
         return f
     }()
 
+    /// Formats a bounding box as a human-readable lat/lon range description.
+    private static func boundsDescription(_ box: BoundingBox) -> String {
+        let latRange = String(format: "%.1f\u{00B0}N\u{2013}%.1f\u{00B0}N", box.minLatitude, box.maxLatitude)
+        let lonRange = String(format: "%.1f\u{00B0}W\u{2013}%.1f\u{00B0}W", abs(box.maxLongitude), abs(box.minLongitude))
+        return "\(latRange), \(lonRange)"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Name and status
@@ -99,6 +120,11 @@ struct ChartRegionRow: View {
                         .foregroundStyle(.green)
                 }
             }
+
+            // Geographic bounds
+            Text(Self.boundsDescription(region.boundingBox))
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             // Dates
             HStack(spacing: 16) {

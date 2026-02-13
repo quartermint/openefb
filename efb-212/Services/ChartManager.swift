@@ -18,6 +18,124 @@ nonisolated actor ChartManager {
     private let chartsDirectory: URL
     private var downloadTasks: [String: Task<URL, any Error>] = [:]
 
+    // MARK: - FAA VFR Sectional Chart Regions
+
+    /// All available FAA VFR sectional chart regions.
+    /// Geographic bounds approximate each sectional's coverage area.
+    /// Download URLs follow the FAA aeronav.faa.gov VFR raster chart structure.
+    /// Charts follow a 56-day cycle; effective/expiration dates are computed from
+    /// the current cycle at runtime.
+    ///
+    /// Real FAA chart source: https://aeronav.faa.gov/visual/
+    /// URL pattern: https://aeronav.faa.gov/visual/{cycle_date}/sectional-files/{name}.zip
+    /// The ZIP contains GeoTIFF raster tiles that must be converted to MBTiles for MapLibre.
+    static let availableRegions: [ChartRegion] = {
+        let cycle = currentChartCycle()
+
+        return [
+            makeRegion(id: "San_Francisco", name: "San Francisco",
+                       minLat: 36.0, maxLat: 40.0, minLon: -124.5, maxLon: -119.5,
+                       sizeMB: 85.2, cycle: cycle),
+            makeRegion(id: "Los_Angeles", name: "Los Angeles",
+                       minLat: 32.5, maxLat: 36.5, minLon: -121.0, maxLon: -115.5,
+                       sizeMB: 92.7, cycle: cycle),
+            makeRegion(id: "Seattle", name: "Seattle",
+                       minLat: 45.5, maxLat: 49.5, minLon: -125.0, maxLon: -119.0,
+                       sizeMB: 68.4, cycle: cycle),
+            makeRegion(id: "Phoenix", name: "Phoenix",
+                       minLat: 31.0, maxLat: 35.0, minLon: -114.5, maxLon: -109.0,
+                       sizeMB: 54.1, cycle: cycle),
+            makeRegion(id: "Salt_Lake_City", name: "Salt Lake City",
+                       minLat: 38.0, maxLat: 42.5, minLon: -115.0, maxLon: -109.0,
+                       sizeMB: 61.3, cycle: cycle),
+            makeRegion(id: "Denver", name: "Denver",
+                       minLat: 37.0, maxLat: 41.5, minLon: -109.0, maxLon: -103.0,
+                       sizeMB: 58.9, cycle: cycle),
+            makeRegion(id: "Dallas-Ft_Worth", name: "Dallas-Ft Worth",
+                       minLat: 30.0, maxLat: 34.5, minLon: -100.5, maxLon: -94.5,
+                       sizeMB: 76.8, cycle: cycle),
+            makeRegion(id: "Chicago", name: "Chicago",
+                       minLat: 39.5, maxLat: 44.0, minLon: -91.5, maxLon: -85.0,
+                       sizeMB: 82.4, cycle: cycle),
+            makeRegion(id: "Atlanta", name: "Atlanta",
+                       minLat: 31.5, maxLat: 36.0, minLon: -87.5, maxLon: -81.0,
+                       sizeMB: 79.1, cycle: cycle),
+            makeRegion(id: "New_York", name: "New York",
+                       minLat: 39.5, maxLat: 43.5, minLon: -76.5, maxLon: -70.0,
+                       sizeMB: 88.5, cycle: cycle),
+            makeRegion(id: "Miami", name: "Miami",
+                       minLat: 24.0, maxLat: 28.5, minLon: -83.5, maxLon: -79.0,
+                       sizeMB: 64.7, cycle: cycle),
+            makeRegion(id: "Charlotte", name: "Charlotte",
+                       minLat: 33.0, maxLat: 37.5, minLon: -83.5, maxLon: -77.0,
+                       sizeMB: 71.3, cycle: cycle),
+            makeRegion(id: "Detroit", name: "Detroit",
+                       minLat: 40.5, maxLat: 45.0, minLon: -86.0, maxLon: -80.0,
+                       sizeMB: 66.2, cycle: cycle),
+            makeRegion(id: "St_Louis", name: "St Louis",
+                       minLat: 36.0, maxLat: 40.5, minLon: -93.0, maxLon: -87.0,
+                       sizeMB: 59.8, cycle: cycle),
+            makeRegion(id: "Kansas_City", name: "Kansas City",
+                       minLat: 36.5, maxLat: 41.0, minLon: -99.5, maxLon: -93.5,
+                       sizeMB: 55.4, cycle: cycle),
+        ]
+    }()
+
+    // MARK: - Chart Cycle Helpers
+
+    /// Computes the current FAA 56-day chart cycle effective and expiration dates.
+    /// The FAA chart cycle epoch is January 27, 2022 (a known cycle start date).
+    /// Each cycle is exactly 56 days.
+    private static func currentChartCycle() -> (effective: Date, expiration: Date) {
+        let calendar = Calendar(identifier: .gregorian)
+        // Known FAA chart cycle epoch: January 27, 2022
+        let epoch = calendar.date(from: DateComponents(year: 2022, month: 1, day: 27))!
+        let now = Date()
+        let daysSinceEpoch = calendar.dateComponents([.day], from: epoch, to: now).day ?? 0
+        let cyclesElapsed = daysSinceEpoch / 56
+        let cycleStart = calendar.date(byAdding: .day, value: cyclesElapsed * 56, to: epoch)!
+        let cycleEnd = calendar.date(byAdding: .day, value: 56, to: cycleStart)!
+        return (effective: cycleStart, expiration: cycleEnd)
+    }
+
+    /// Creates a ChartRegion with the FAA download URL pattern.
+    private static func makeRegion(
+        id: String, name: String,
+        minLat: Double, maxLat: Double,
+        minLon: Double, maxLon: Double,
+        sizeMB: Double,
+        cycle: (effective: Date, expiration: Date)
+    ) -> ChartRegion {
+        ChartRegion(
+            id: id,
+            name: name,
+            effectiveDate: cycle.effective,
+            expirationDate: cycle.expiration,
+            boundingBox: BoundingBox(
+                minLatitude: minLat, maxLatitude: maxLat,
+                minLongitude: minLon, maxLongitude: maxLon
+            ),
+            fileSizeMB: sizeMB,
+            isDownloaded: false,
+            localPath: nil
+        )
+    }
+
+    /// Returns the FAA download URL for a given sectional chart region.
+    /// FAA publishes VFR raster charts at https://aeronav.faa.gov/visual/
+    /// The actual URL requires the cycle date in MM-DD-YYYY format.
+    /// Charts are distributed as ZIP files containing GeoTIFF raster data
+    /// that must be processed into MBTiles format for MapLibre rendering.
+    static func downloadURL(for region: ChartRegion) -> URL {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM-dd-yyyy"
+        let cycleDate = formatter.string(from: region.effectiveDate)
+        // FAA URL pattern for VFR sectional ZIPs
+        // e.g., https://aeronav.faa.gov/visual/01-27-2022/sectional-files/San_Francisco.zip
+        let urlString = "https://aeronav.faa.gov/visual/\(cycleDate)/sectional-files/\(region.id).zip"
+        return URL(string: urlString)!
+    }
+
     // MARK: - Init
 
     init() {
@@ -188,6 +306,45 @@ nonisolated actor ChartManager {
     func localPath(for regionID: String) -> URL? {
         let filePath = chartsDirectory.appendingPathComponent("\(regionID).mbtiles")
         return fileManager.fileExists(atPath: filePath.path) ? filePath : nil
+    }
+
+    // MARK: - Convenience Download
+
+    /// Downloads a chart region using the FAA URL derived from the region metadata.
+    /// Returns the local file URL on success.
+    ///
+    /// - Parameter region: The chart region to download.
+    /// - Returns: Local URL of the downloaded mbtiles file.
+    /// - Throws: `EFBError.chartDownloadFailed` on network or file errors.
+    func downloadChart(for region: ChartRegion) async throws -> URL {
+        let url = ChartManager.downloadURL(for: region)
+        return try await download(region: region, from: url)
+    }
+
+    // MARK: - Region Status
+
+    /// Returns available regions with their current download status resolved
+    /// by checking which MBTiles files exist on disk.
+    func regionsWithStatus() -> [ChartRegion] {
+        ChartManager.availableRegions.map { region in
+            var updated = region
+            if let path = localPath(for: region.id) {
+                updated.isDownloaded = true
+                updated.localPath = path
+            }
+            return updated
+        }
+    }
+
+    /// Returns all downloaded region MBTiles file paths.
+    func downloadedChartPaths() -> [String: URL] {
+        var paths: [String: URL] = [:]
+        for region in ChartManager.availableRegions {
+            if let path = localPath(for: region.id) {
+                paths[region.id] = path
+            }
+        }
+        return paths
     }
 
     // MARK: - Cancel

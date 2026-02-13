@@ -12,7 +12,7 @@ import CoreLocation
 
 // MARK: - Airport
 
-struct Airport: Identifiable, Codable, Equatable, Hashable {
+struct Airport: Identifiable, Codable, Equatable, Hashable, Sendable {
     var id: String { icao }
     let icao: String                     // ICAO identifier (e.g., "KPAO")
     let faaID: String?                   // FAA LID if different (e.g., "PAO")
@@ -33,6 +33,46 @@ struct Airport: Identifiable, Codable, Equatable, Hashable {
     let runways: [Runway]
     let frequencies: [Frequency]
 
+    nonisolated init(
+        icao: String,
+        faaID: String? = nil,
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        elevation: Double,
+        type: AirportType,
+        ownership: OwnershipType,
+        ctafFrequency: Double? = nil,
+        unicomFrequency: Double? = nil,
+        artccID: String? = nil,
+        fssID: String? = nil,
+        magneticVariation: Double? = nil,
+        patternAltitude: Int? = nil,
+        fuelTypes: [String] = [],
+        hasBeaconLight: Bool = false,
+        runways: [Runway] = [],
+        frequencies: [Frequency] = []
+    ) {
+        self.icao = icao
+        self.faaID = faaID
+        self.name = name
+        self.latitude = latitude
+        self.longitude = longitude
+        self.elevation = elevation
+        self.type = type
+        self.ownership = ownership
+        self.ctafFrequency = ctafFrequency
+        self.unicomFrequency = unicomFrequency
+        self.artccID = artccID
+        self.fssID = fssID
+        self.magneticVariation = magneticVariation
+        self.patternAltitude = patternAltitude
+        self.fuelTypes = fuelTypes
+        self.hasBeaconLight = hasBeaconLight
+        self.runways = runways
+        self.frequencies = frequencies
+    }
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -48,7 +88,7 @@ struct Airport: Identifiable, Codable, Equatable, Hashable {
 
 // MARK: - Runway
 
-struct Runway: Identifiable, Codable, Equatable {
+struct Runway: Identifiable, Codable, Equatable, Sendable {
     let id: String                       // e.g., "13/31"
     let length: Int                      // feet
     let width: Int                       // feet
@@ -62,15 +102,45 @@ struct Runway: Identifiable, Codable, Equatable {
     let reciprocalEndLongitude: Double
     let baseEndElevation: Double?        // feet MSL (TDZE)
     let reciprocalEndElevation: Double?
+
+    nonisolated init(
+        id: String, length: Int, width: Int,
+        surface: SurfaceType, lighting: LightingType,
+        baseEndID: String, reciprocalEndID: String,
+        baseEndLatitude: Double, baseEndLongitude: Double,
+        reciprocalEndLatitude: Double, reciprocalEndLongitude: Double,
+        baseEndElevation: Double? = nil, reciprocalEndElevation: Double? = nil
+    ) {
+        self.id = id
+        self.length = length
+        self.width = width
+        self.surface = surface
+        self.lighting = lighting
+        self.baseEndID = baseEndID
+        self.reciprocalEndID = reciprocalEndID
+        self.baseEndLatitude = baseEndLatitude
+        self.baseEndLongitude = baseEndLongitude
+        self.reciprocalEndLatitude = reciprocalEndLatitude
+        self.reciprocalEndLongitude = reciprocalEndLongitude
+        self.baseEndElevation = baseEndElevation
+        self.reciprocalEndElevation = reciprocalEndElevation
+    }
 }
 
 // MARK: - Frequency
 
-struct Frequency: Identifiable, Codable, Equatable {
+struct Frequency: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     let type: FrequencyType
     let frequency: Double                // MHz (e.g., 118.6)
     let name: String                     // "Palo Alto Tower"
+
+    nonisolated init(id: UUID = UUID(), type: FrequencyType, frequency: Double, name: String) {
+        self.id = id
+        self.type = type
+        self.frequency = frequency
+        self.name = name
+    }
 }
 
 // MARK: - Navaid
@@ -185,7 +255,7 @@ struct Waypoint: Identifiable, Codable, Equatable {
 
 // MARK: - Weather Cache
 
-struct WeatherCache: Identifiable, Codable, Equatable {
+struct WeatherCache: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     var stationID: String                // ICAO (e.g., "KPAO")
     var metar: String?                   // Raw METAR text
@@ -200,16 +270,16 @@ struct WeatherCache: Identifiable, Codable, Equatable {
     var observationTime: Date?           // When observation was taken
 
     /// Age of the weather data in seconds
-    var age: TimeInterval {
+    nonisolated var age: TimeInterval {
         Date().timeIntervalSince(fetchedAt)
     }
 
     /// Whether data is considered stale (> 60 minutes from fetch)
-    var isStale: Bool {
+    nonisolated var isStale: Bool {
         age > 3600
     }
 
-    init(
+    nonisolated init(
         id: UUID = UUID(),
         stationID: String,
         metar: String? = nil,

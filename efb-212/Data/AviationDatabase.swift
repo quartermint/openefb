@@ -25,7 +25,7 @@ final class AviationDatabase: @unchecked Sendable {
         try Self.migrator.migrate(dbPool)
     }
 
-    private static var migrator: DatabaseMigrator {
+    nonisolated private static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
 
         migrator.registerMigration("v1") { db in
@@ -55,10 +55,10 @@ final class AviationDatabase: @unchecked Sendable {
                 USING rtree(id, minLat, maxLat, minLon, maxLon)
             """)
 
-            // FTS5 full-text search index
+            // FTS5 full-text search index (self-contained — no external content sync issues)
             try db.execute(sql: """
                 CREATE VIRTUAL TABLE IF NOT EXISTS airports_fts
-                USING fts5(icao, name, faaID, content='airports', content_rowid='rowid')
+                USING fts5(icao, name, faaID)
             """)
 
             // ── Runways ──
@@ -124,6 +124,135 @@ final class AviationDatabase: @unchecked Sendable {
         }
 
         return migrator
+    }
+
+    // MARK: - Data Import
+
+    /// Insert or replace an airport and populate the R-tree and FTS5 indexes.
+    nonisolated func insertAirport(_ airport: Airport) throws {
+        try dbPool.write { db in
+            // Clean up old R-tree and FTS entries before replacing (avoids stale index entries)
+            let oldRowid = try Int64.fetchOne(db, sql: "SELECT rowid FROM airports WHERE icao = ?", arguments: [airport.icao])
+            if let oldRowid {
+                try db.execute(sql: "DELETE FROM airports_rtree WHERE id = ?", arguments: [oldRowid])
+                try db.execute(sql: "DELETE FROM airports_fts WHERE rowid = ?", arguments: [oldRowid])
+            }
+
+            let fuelJSON: String? = airport.fuelTypes.isEmpty ? nil : (try? String(data: JSONEncoder().encode(airport.fuelTypes), encoding: .utf8))
+
+            try db.execute(
+                sql: """
+                    INSERT OR REPLACE INTO airports
+                    (icao, faaID, name, latitude, longitude, elevation, type, ownership,
+                     ctafFrequency, unicomFrequency, artccID, fssID, magneticVariation,
+                     patternAltitude, fuelTypes, hasBeaconLight)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                arguments: [
+                    airport.icao,
+                    airport.faaID,
+                    airport.name,
+                    airport.latitude,
+                    airport.longitude,
+                    airport.elevation,
+                    airport.type.rawValue,
+                    airport.ownership.rawValue,
+                    airport.ctafFrequency,
+                    airport.unicomFrequency,
+                    airport.artccID,
+                    airport.fssID,
+                    airport.magneticVariation,
+                    airport.patternAltitude,
+                    fuelJSON,
+                    airport.hasBeaconLight
+                ]
+            )
+
+            // Get the rowid for the R-tree and FTS indexes
+            let rowid = db.lastInsertedRowID
+
+            // Populate R-tree spatial index
+            try db.execute(
+                sql: """
+                    INSERT INTO airports_rtree (id, minLat, maxLat, minLon, maxLon)
+                    VALUES (?, ?, ?, ?, ?)
+                """,
+                arguments: [rowid, airport.latitude, airport.latitude, airport.longitude, airport.longitude]
+            )
+
+            // Populate FTS5 search index
+            try db.execute(
+                sql: """
+                    INSERT INTO airports_fts (rowid, icao, name, faaID)
+                    VALUES (?, ?, ?, ?)
+                """,
+                arguments: [rowid, airport.icao, airport.name, airport.faaID]
+            )
+
+            // Delete existing runways for this airport, then insert fresh
+            try db.execute(sql: "DELETE FROM runways WHERE airportICAO = ?", arguments: [airport.icao])
+            for runway in airport.runways {
+                try db.execute(
+                    sql: """
+                        INSERT INTO runways
+                        (id, airportICAO, length, width, surface, lighting,
+                         baseEndID, reciprocalEndID,
+                         baseEndLatitude, baseEndLongitude,
+                         reciprocalEndLatitude, reciprocalEndLongitude,
+                         baseEndElevation, reciprocalEndElevation)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        runway.id,
+                        airport.icao,
+                        runway.length,
+                        runway.width,
+                        runway.surface.rawValue,
+                        runway.lighting.rawValue,
+                        runway.baseEndID,
+                        runway.reciprocalEndID,
+                        runway.baseEndLatitude,
+                        runway.baseEndLongitude,
+                        runway.reciprocalEndLatitude,
+                        runway.reciprocalEndLongitude,
+                        runway.baseEndElevation,
+                        runway.reciprocalEndElevation
+                    ]
+                )
+            }
+
+            // Delete existing frequencies for this airport, then insert fresh
+            try db.execute(sql: "DELETE FROM frequencies WHERE airportICAO = ?", arguments: [airport.icao])
+            for freq in airport.frequencies {
+                try db.execute(
+                    sql: """
+                        INSERT OR REPLACE INTO frequencies (id, airportICAO, type, frequency, name)
+                        VALUES (?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        freq.id.uuidString,
+                        airport.icao,
+                        freq.type.rawValue,
+                        freq.frequency,
+                        freq.name
+                    ]
+                )
+            }
+        }
+    }
+
+    /// Bulk insert airports in a single transaction for performance.
+    nonisolated func insertAirports(_ airports: [Airport]) throws {
+        for airport in airports {
+            try insertAirport(airport)
+        }
+    }
+
+    /// Return the total number of airports in the database.
+    nonisolated func airportCount() throws -> Int {
+        try dbPool.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM airports") ?? 0
+        }
     }
 
     // MARK: - Airport Queries
