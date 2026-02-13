@@ -2,60 +2,170 @@
 //  ContentView.swift
 //  efb-212
 //
-//  Created by Ryan Stern on 2/12/26.
+//  Root view — TabView with 5 main app tabs.
+//  Map tab shows the full moving map with instrument strip and layer controls.
+//  Flights tab shows flight history with manual entry.
+//  Logbook tab shows traditional pilot logbook format.
+//  Aircraft tab shows pilot and aircraft profile management.
+//  Settings tab shows app settings and chart management.
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @EnvironmentObject var appState: AppState
+    @State private var selectedTab: AppTab = .map
+
+    // Map dependencies — created once for the map tab
+    @State private var mapService = MapService()
+    @State private var mapViewModel: MapViewModel?
+
+    // Flight planning
+    @State private var flightPlanViewModel: FlightPlanViewModel?
+    @State private var weatherViewModel: WeatherViewModel?
+    @State private var showFlightPlan: Bool = false
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+        TabView(selection: $selectedTab) {
+            Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
+                mapTab
+            }
+
+            Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
+                NavigationStack {
+                    FlightListView()
+                }
+            }
+
+            Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
+                NavigationStack {
+                    LogbookView()
+                }
+            }
+
+            Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
+                aircraftTab
+            }
+
+            Tab(AppTab.settings.title, systemImage: AppTab.settings.systemImage, value: .settings) {
+                NavigationStack {
+                    SettingsView()
+                }
+            }
+        }
+        .onAppear {
+            if mapViewModel == nil {
+                mapViewModel = MapViewModel(
+                    databaseManager: appState.databaseManager,
+                    mapService: mapService
+                )
+            }
+            if flightPlanViewModel == nil {
+                flightPlanViewModel = FlightPlanViewModel(
+                    databaseManager: appState.databaseManager
+                )
+            }
+            if weatherViewModel == nil {
+                weatherViewModel = WeatherViewModel(
+                    weatherService: appState.weatherService
+                )
+            }
+        }
+        .sheet(isPresented: $appState.isPresentingAirportInfo) {
+            if let airportID = appState.selectedAirportID,
+               let airport = mapViewModel?.selectedAirport, airport.icao == airportID {
+                let weather = weatherViewModel?.weatherData[airportID]
+                AirportInfoSheet(airport: airport, weather: weather)
+            }
+        }
+        .sheet(isPresented: $showFlightPlan) {
+            if let fpvm = flightPlanViewModel, let wvm = weatherViewModel {
+                FlightPlanView(viewModel: fpvm, weatherViewModel: wvm)
+            }
+        }
+        .onChange(of: flightPlanViewModel?.activePlan) {
+            // Sync flight plan to AppState for InstrumentStrip DTG/ETE
+            appState.activeFlightPlan = flightPlanViewModel?.activePlan
+            if let plan = flightPlanViewModel?.activePlan {
+                appState.distanceToNext = plan.totalDistance
+                appState.estimatedTimeEnroute = plan.estimatedTime
+                // Render route line on map
+                mapService.showRoute(waypoints: plan.waypoints)
+            } else {
+                appState.distanceToNext = nil
+                appState.estimatedTimeEnroute = nil
+                mapService.clearRoute()
+            }
+        }
+    }
+
+    // MARK: - Map Tab
+
+    @ViewBuilder
+    private var mapTab: some View {
+        ZStack(alignment: .bottom) {
+            // Map fills the entire space
+            MapView(mapService: mapService)
+                .ignoresSafeArea(edges: .top)
+
+            // Floating controls
+            VStack {
+                HStack {
+                    // Flight plan button (top-left)
+                    Button {
+                        showFlightPlan = true
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        Image(systemName: "paperplane.fill")
+                            .font(.title3)
+                            .padding(10)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
                     }
+                    .padding(.leading, 16)
+                    .padding(.top, 60)
+
+                    Spacer()
+
+                    // Layer controls (top-right)
+                    LayerControlsView(mapService: mapService)
+                        .padding(.trailing, 16)
+                        .padding(.top, 60)
                 }
-                .onDelete(perform: deleteItems)
+                Spacer()
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
+
+            // Instrument strip at bottom
+            InstrumentStripView()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
         }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+    // MARK: - Aircraft Tab
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+    @ViewBuilder
+    private var aircraftTab: some View {
+        NavigationStack {
+            List {
+                NavigationLink("Aircraft Profiles") {
+                    AircraftProfileView()
+                }
+                NavigationLink("Pilot Profile") {
+                    PilotProfileView()
+                }
             }
+            .navigationTitle("Aircraft & Pilot")
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .environmentObject(
+            AppState(
+                locationManager: PlaceholderLocationManager(),
+                databaseManager: PlaceholderDatabaseManager(),
+                weatherService: PlaceholderWeatherService()
+            )
+        )
 }

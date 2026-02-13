@@ -112,6 +112,8 @@
 			);
 			name = "efb-212";
 			packageProductDependencies = (
+				AA0001012F3E7000007A1A80 /* GRDB */,
+				AA0001022F3E7000007A1A80 /* MapLibre */,
 			);
 			productName = "efb-212";
 			productReference = 172758642F3E6978007A1A80 /* efb-212.app */;
@@ -195,6 +197,10 @@
 			);
 			mainGroup = 1727585B2F3E6978007A1A80;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				AA0002022F3E7000007A1A80 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 172758652F3E6978007A1A80 /* Products */;
 			projectDirPath = "";
@@ -401,6 +407,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "OpenEFB needs your location to display your position on the aviation map and calculate distances to airports and waypoints.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -433,6 +440,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "OpenEFB needs your location to display your position on the aviation map and calculate distances to airports and waypoints.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -578,6 +586,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
+		AA0002022F3E7000007A1A80 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA0001012F3E7000007A1A80 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA0002012F3E7000007A1A80 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+		AA0001022F3E7000007A1A80 /* MapLibre */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA0002022F3E7000007A1A80 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
+			productName = MapLibre;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1727585C2F3E6978007A1A80 /* Project object */;
 }

@@ -1,0 +1,24 @@
+{
+  "originHash" : "dde758b17660ca25f2784567e30ba50dfe0df24ba5bbd7eed58e1cd73b670bd8",
+  "pins" : [
+    {
+      "identity" : "grdb.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/groue/GRDB.swift",
+      "state" : {
+        "revision" : "aa0079aeb82a4bf00324561a40bffe68c6fe1c26",
+        "version" : "7.9.0"
+      }
+    },
+    {
+      "identity" : "maplibre-gl-native-distribution",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/maplibre/maplibre-gl-native-distribution",
+      "state" : {
+        "revision" : "4cbd3f5f25583627006e60c5fcdaf5339813118c",
+        "version" : "6.23.0"
+      }
+    }
+  ],
+  "version" : 3
+}

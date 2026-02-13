@@ -2,7 +2,8 @@
 //  efb_212App.swift
 //  efb-212
 //
-//  Created by Ryan Stern on 2/12/26.
+//  App entry point with dependency injection.
+//  All types are @MainActor by default (SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor).
 //
 
 import SwiftUI
@@ -10,23 +11,23 @@ import SwiftData
 
 @main
 struct efb_212App: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    @State private var appState: AppState
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    init() {
+        // Production dependencies — placeholder implementations for now.
+        // Real implementations will be created in later waves.
+        let appState = AppState(
+            locationManager: PlaceholderLocationManager(),
+            databaseManager: PlaceholderDatabaseManager(),
+            weatherService: PlaceholderWeatherService()
+        )
+        _appState = State(wrappedValue: appState)
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(appState)
         }
-        .modelContainer(sharedModelContainer)
     }
 }
