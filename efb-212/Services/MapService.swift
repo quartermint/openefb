@@ -325,10 +325,15 @@ final class MapService: NSObject, ObservableObject {
 
     // MARK: - Weather Dots
 
+    /// Reusable annotation identifier for weather dots.
+    private static let weatherAnnotationIdentifier = "weather-annotation"
+
     /// Add color-coded weather dots (flight category) at airport locations.
     /// Each dot color represents VFR (green), MVFR (blue), IFR (red), or LIFR (magenta).
-    /// - Parameter weather: Array of WeatherCache entries with station locations.
-    func addWeatherDots(_ weather: [WeatherCache]) {
+    /// - Parameters:
+    ///   - weather: Array of WeatherCache entries with station data.
+    ///   - coordinates: Dictionary mapping station ICAO ID to its coordinate.
+    func addWeatherDots(_ weather: [WeatherCache], coordinates: [String: CLLocationCoordinate2D]) {
         guard let mapView = mapView else { return }
 
         // Remove existing weather annotations
@@ -343,14 +348,12 @@ final class MapService: NSObject, ObservableObject {
             mapView.removeAnnotations(existingAnnotations)
         }
 
-        // Weather dots are rendered as point annotations.
-        // In a full implementation, these would be circle style layers
-        // colored by flight category. For now, use point annotations.
-        let annotations = weather.map { wx -> MLNPointAnnotation in
+        // Weather dots are rendered as point annotations colored by flight category.
+        let annotations = weather.compactMap { wx -> MLNPointAnnotation? in
+            guard let coordinate = coordinates[wx.stationID] else { return nil }
             let point = MLNPointAnnotation()
-            // Station coordinates will be resolved via database lookup.
-            // For now, the annotation uses the stationID as the title.
-            point.title = "WX:\(wx.stationID)"
+            point.coordinate = coordinate
+            point.title = "WX:\(wx.stationID):\(wx.flightCategory.rawValue)"
             point.subtitle = "\(wx.flightCategory.rawValue.uppercased()) — \(wx.stationID)"
             return point
         }
@@ -358,6 +361,87 @@ final class MapService: NSObject, ObservableObject {
         if !annotations.isEmpty {
             mapView.addAnnotations(annotations)
         }
+    }
+
+    /// Remove all weather dot annotations from the map.
+    func removeWeatherDots() {
+        guard let mapView = mapView else { return }
+
+        let weatherAnnotations = mapView.annotations?.filter { annotation in
+            if let point = annotation as? MLNPointAnnotation {
+                return point.title?.hasPrefix("WX:") == true
+            }
+            return false
+        } ?? []
+
+        if !weatherAnnotations.isEmpty {
+            mapView.removeAnnotations(weatherAnnotations)
+        }
+    }
+
+    // MARK: - Navaid Annotations
+
+    /// Reusable annotation identifier for navaid markers.
+    private static let navaidAnnotationIdentifier = "navaid-annotation"
+
+    /// Add navaid annotations to the map.
+    /// Removes any existing navaid annotations before adding new ones.
+    /// - Parameter navaids: Array of Navaid models to display.
+    func addNavaidAnnotations(_ navaids: [Navaid]) {
+        guard let mapView = mapView else { return }
+
+        // Remove existing navaid annotations
+        let existingAnnotations = mapView.annotations?.filter { annotation in
+            if let point = annotation as? MLNPointAnnotation {
+                return point.title?.hasPrefix("NAV:") == true
+            }
+            return false
+        } ?? []
+
+        if !existingAnnotations.isEmpty {
+            mapView.removeAnnotations(existingAnnotations)
+        }
+
+        // Add new annotations
+        let annotations = navaids.map { navaid -> MLNPointAnnotation in
+            let point = MLNPointAnnotation()
+            point.coordinate = navaid.coordinate
+            // Prefix title with "NAV:" so we can identify navaid annotations later
+            point.title = "NAV:\(navaid.id)"
+            let freqStr = navaid.type == .ndb || navaid.type == .ndbDme
+                ? String(format: "%.0f kHz", navaid.frequency)
+                : String(format: "%.1f MHz", navaid.frequency)
+            point.subtitle = "\(navaid.name) \(navaid.type.rawValue.uppercased()) \(freqStr)"
+            return point
+        }
+
+        if !annotations.isEmpty {
+            mapView.addAnnotations(annotations)
+        }
+    }
+
+    /// Remove all navaid annotations from the map.
+    func removeNavaidAnnotations() {
+        guard let mapView = mapView else { return }
+
+        let navaidAnnotations = mapView.annotations?.filter { annotation in
+            if let point = annotation as? MLNPointAnnotation {
+                return point.title?.hasPrefix("NAV:") == true
+            }
+            return false
+        } ?? []
+
+        if !navaidAnnotations.isEmpty {
+            mapView.removeAnnotations(navaidAnnotations)
+        }
+    }
+
+    // MARK: - User Location
+
+    /// Enable the native user location dot on the map.
+    /// Call after location authorization has been granted.
+    func enableUserLocation() {
+        mapView?.showsUserLocation = true
     }
 
     // MARK: - Map Mode
@@ -441,23 +525,74 @@ extension MapService: MLNMapViewDelegate {
             return nil
         }
 
-        // For airport annotations, return a colored dot
-        guard let title = annotation.title ?? nil, title.hasPrefix("APT:") else {
-            return nil
+        guard let title = annotation.title ?? nil else { return nil }
+
+        // Weather dot annotations — "WX:KPAO:vfr"
+        if title.hasPrefix("WX:") {
+            let reuseIdentifier = MapService.weatherAnnotationIdentifier
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseIdentifier)
+
+            if annotationView == nil {
+                annotationView = MLNAnnotationView(reuseIdentifier: reuseIdentifier)
+                annotationView?.frame = CGRect(x: 0, y: 0, width: 14, height: 14)
+                annotationView?.layer.cornerRadius = 7
+                annotationView?.layer.borderWidth = 1.5
+                annotationView?.layer.borderColor = UIColor.white.cgColor
+            }
+
+            // Parse flight category from title: "WX:KPAO:vfr"
+            let parts = title.split(separator: ":")
+            let categoryRaw = parts.count >= 3 ? String(parts[2]) : "vfr"
+            let category = FlightCategory(rawValue: categoryRaw) ?? .vfr
+            annotationView?.backgroundColor = Self.color(for: category)
+
+            return annotationView
         }
 
-        let reuseIdentifier = MapService.airportAnnotationIdentifier
-        var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseIdentifier)
+        // Navaid annotations — "NAV:SFO"
+        if title.hasPrefix("NAV:") {
+            let reuseIdentifier = MapService.navaidAnnotationIdentifier
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseIdentifier)
 
-        if annotationView == nil {
-            annotationView = MLNAnnotationView(reuseIdentifier: reuseIdentifier)
-            annotationView?.frame = CGRect(x: 0, y: 0, width: 12, height: 12)
-            annotationView?.backgroundColor = .systemCyan
-            annotationView?.layer.cornerRadius = 6
-            annotationView?.layer.borderWidth = 1
-            annotationView?.layer.borderColor = UIColor.white.cgColor
+            if annotationView == nil {
+                annotationView = MLNAnnotationView(reuseIdentifier: reuseIdentifier)
+                annotationView?.frame = CGRect(x: 0, y: 0, width: 10, height: 10)
+                annotationView?.backgroundColor = .systemPurple
+                annotationView?.layer.cornerRadius = 5
+                annotationView?.layer.borderWidth = 1
+                annotationView?.layer.borderColor = UIColor.white.cgColor
+            }
+
+            return annotationView
         }
 
-        return annotationView
+        // Airport annotations — "APT:KPAO"
+        if title.hasPrefix("APT:") {
+            let reuseIdentifier = MapService.airportAnnotationIdentifier
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseIdentifier)
+
+            if annotationView == nil {
+                annotationView = MLNAnnotationView(reuseIdentifier: reuseIdentifier)
+                annotationView?.frame = CGRect(x: 0, y: 0, width: 12, height: 12)
+                annotationView?.backgroundColor = .systemCyan
+                annotationView?.layer.cornerRadius = 6
+                annotationView?.layer.borderWidth = 1
+                annotationView?.layer.borderColor = UIColor.white.cgColor
+            }
+
+            return annotationView
+        }
+
+        return nil
+    }
+
+    /// Map FlightCategory to UIColor for weather dot rendering.
+    private static func color(for category: FlightCategory) -> UIColor {
+        switch category {
+        case .vfr:  return .systemGreen
+        case .mvfr: return .systemBlue
+        case .ifr:  return .systemRed
+        case .lifr: return .systemPurple
+        }
     }
 }

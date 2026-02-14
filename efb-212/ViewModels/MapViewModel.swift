@@ -18,6 +18,9 @@ final class MapViewModel: ObservableObject {
     /// Airports currently visible in the map viewport.
     @Published var visibleAirports: [Airport] = []
 
+    /// Navaids currently visible in the map viewport.
+    @Published var visibleNavaids: [Navaid] = []
+
     /// Currently selected airport (tapped on map).
     @Published var selectedAirport: Airport?
 
@@ -30,9 +33,14 @@ final class MapViewModel: ObservableObject {
     // MARK: - Dependencies
 
     private let databaseManager: any DatabaseManagerProtocol
+    private let weatherService: any WeatherServiceProtocol
     private let locationManager: (any LocationManagerProtocol)?
+    private weak var appState: AppState?
     let mapService: MapService
     private var cancellables = Set<AnyCancellable>()
+
+    /// Whether user location has already been enabled on the map.
+    private var userLocationEnabled: Bool = false
 
     /// Debounce interval for region-change airport reloads — seconds.
     private let regionChangeDebounce: TimeInterval = 0.5
@@ -46,11 +54,15 @@ final class MapViewModel: ObservableObject {
     init(
         databaseManager: any DatabaseManagerProtocol,
         mapService: MapService,
-        locationManager: (any LocationManagerProtocol)? = nil
+        locationManager: (any LocationManagerProtocol)? = nil,
+        weatherService: any WeatherServiceProtocol = PlaceholderWeatherService(),
+        appState: AppState? = nil
     ) {
         self.databaseManager = databaseManager
         self.mapService = mapService
         self.locationManager = locationManager
+        self.weatherService = weatherService
+        self.appState = appState
         setupMapServiceDelegate()
         subscribeToLocationUpdates()
         loadInitialAirports()
@@ -63,12 +75,15 @@ final class MapViewModel: ObservableObject {
     }
 
     /// Subscribe to location updates to render ownship position on the map.
+    /// Also enables the native user location dot on first location update.
     private func subscribeToLocationUpdates() {
         guard let locationManager else { return }
         locationManager.locationPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] location in
                 guard let self else { return }
+                // Enable user location dot on first location update (authorization confirmed)
+                self.enableUserLocationIfNeeded()
                 self.mapService.updateOwnship(
                     location: location,
                     heading: locationManager.heading
@@ -90,6 +105,7 @@ final class MapViewModel: ObservableObject {
 
     /// Load airports within a radius of the given center coordinate.
     /// Uses the database manager to query airports near the visible region.
+    /// After loading airports, fetches weather for them if the weather dots layer is active.
     /// - Parameters:
     ///   - center: Center of the visible map region.
     ///   - radiusNM: Search radius in nautical miles.
@@ -104,9 +120,85 @@ final class MapViewModel: ObservableObject {
             let airports = try await databaseManager.airports(near: center, radiusNM: clampedRadius)
             visibleAirports = airports
             mapService.addAirportAnnotations(airports)
+
+            // Load and display navaids if the layer is active
+            await loadNavaidsForRegion(center: center, radiusNM: clampedRadius)
+
+            // Fetch and display weather dots if the layer is active
+            await loadWeatherForVisibleAirports(airports)
         } catch {
             lastError = .airportNotFound("region query")
         }
+    }
+
+    // MARK: - Navaid Loading
+
+    /// Load navaids within a radius of the given center coordinate and display on map.
+    /// Only loads when the navaids layer is enabled in AppState.
+    /// - Parameters:
+    ///   - center: Center of the visible map region.
+    ///   - radiusNM: Search radius in nautical miles.
+    func loadNavaidsForRegion(center: CLLocationCoordinate2D, radiusNM: Double) async {
+        guard let appState, appState.visibleLayers.contains(.navaids) else {
+            visibleNavaids = []
+            mapService.removeNavaidAnnotations()
+            return
+        }
+
+        do {
+            let navaids = try await databaseManager.navaids(near: center, radiusNM: radiusNM)
+            visibleNavaids = navaids
+            mapService.addNavaidAnnotations(navaids)
+        } catch {
+            visibleNavaids = []
+            mapService.removeNavaidAnnotations()
+        }
+    }
+
+    // MARK: - Weather Dots
+
+    /// Fetch weather for visible airports and display dots on the map.
+    /// Only fetches when the weatherDots layer is enabled in AppState.
+    /// - Parameter airports: The currently visible airports to fetch weather for.
+    func loadWeatherForVisibleAirports(_ airports: [Airport]) async {
+        // Only fetch if weather dots layer is active
+        guard let appState, appState.visibleLayers.contains(.weatherDots) else {
+            mapService.removeWeatherDots()
+            return
+        }
+
+        guard !airports.isEmpty else {
+            mapService.removeWeatherDots()
+            return
+        }
+
+        // Extract station IDs (ICAO codes) from visible airports
+        let stationIDs = airports.map(\.icao)
+
+        // Build coordinate lookup from the loaded airports
+        var coordinates: [String: CLLocationCoordinate2D] = [:]
+        for airport in airports {
+            coordinates[airport.icao] = airport.coordinate
+        }
+
+        do {
+            let weather = try await weatherService.fetchWeatherForStations(stationIDs)
+            mapService.addWeatherDots(weather, coordinates: coordinates)
+        } catch {
+            // Weather fetch failure is non-critical — dots just won't appear.
+            // Remove any stale dots rather than showing outdated data.
+            mapService.removeWeatherDots()
+        }
+    }
+
+    // MARK: - User Location
+
+    /// Enable user location display on the map if the location manager is authorized.
+    /// Called from subscribeToLocationUpdates when the first location arrives.
+    private func enableUserLocationIfNeeded() {
+        guard !userLocationEnabled else { return }
+        mapService.enableUserLocation()
+        userLocationEnabled = true
     }
 
     /// Select an airport by model — triggers info sheet presentation.

@@ -19,6 +19,13 @@ protocol DatabaseManagerProtocol: Sendable {
     func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Double) async throws -> [Airspace]
     func nearestAirports(to coordinate: CLLocationCoordinate2D, count: Int) async throws -> [Airport]
 
+    // Navaids
+    func navaid(byID id: String) async throws -> Navaid?
+    func navaids(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Navaid]
+
+    // Weather station coordinate resolution
+    func airportCoordinate(forStation stationID: String) async throws -> CLLocationCoordinate2D?
+
     // Weather cache (ephemeral GRDB)
     func cachedWeather(for stationID: String) async throws -> WeatherCache?
     func cacheWeather(_ weather: WeatherCache) async throws

@@ -36,6 +36,24 @@ final class MockDatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
         Array(airports.prefix(count))
     }
 
+    // Navaids
+    var navaids: [Navaid] = []
+
+    func navaid(byID id: String) async throws -> Navaid? {
+        navaids.first { $0.id == id }
+    }
+
+    func navaids(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Navaid] {
+        navaids
+    }
+
+    // Weather station coordinate resolution
+    func airportCoordinate(forStation stationID: String) async throws -> CLLocationCoordinate2D? {
+        airports.first { $0.icao == stationID }.map {
+            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+        }
+    }
+
     func cachedWeather(for stationID: String) async throws -> WeatherCache? {
         weatherCache[stationID]
     }

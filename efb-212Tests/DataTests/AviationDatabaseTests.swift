@@ -354,4 +354,159 @@ struct AviationDatabaseTests {
         #expect(staleStations.contains("KSQL"))
         #expect(!staleStations.contains("KPAO"))
     }
+
+    // MARK: - Navaid Insert & Lookup
+
+    static func makeTestNavaid(
+        id: String = "SJC",
+        name: String = "San Jose",
+        type: NavaidType = .vorDme,
+        latitude: Double = 37.3626,
+        longitude: Double = -121.9291,
+        frequency: Double = 114.1,
+        magneticVariation: Double? = 14.0,
+        elevation: Double? = 56
+    ) -> Navaid {
+        Navaid(
+            id: id, name: name, type: type,
+            latitude: latitude, longitude: longitude,
+            frequency: frequency,
+            magneticVariation: magneticVariation,
+            elevation: elevation
+        )
+    }
+
+    static let sjcVOR = makeTestNavaid()
+    static let oakVOR = makeTestNavaid(id: "OAK", name: "Oakland", latitude: 37.7213, longitude: -122.2208, frequency: 116.8)
+    static let sqpVOR = makeTestNavaid(id: "SQP", name: "Saratoga", latitude: 37.27, longitude: -122.05, frequency: 117.0)
+
+    @Test func insertAndLookupNavaid() throws {
+        let db = try Self.makeTempDB()
+        try db.insertNavaid(Self.sjcVOR)
+
+        let found = try db.navaid(byID: "SJC")
+        #expect(found != nil)
+        #expect(found?.id == "SJC")
+        #expect(found?.name == "San Jose")
+        #expect(found?.type == .vorDme)
+        #expect(found?.frequency == 114.1)
+        #expect(found?.latitude == 37.3626)
+    }
+
+    @Test func navaidNotFound() throws {
+        let db = try Self.makeTempDB()
+        try db.insertNavaid(Self.sjcVOR)
+
+        let notFound = try db.navaid(byID: "ZZZZ")
+        #expect(notFound == nil)
+    }
+
+    @Test func bulkInsertNavaids() throws {
+        let db = try Self.makeTempDB()
+        try db.insertNavaids([Self.sjcVOR, Self.oakVOR, Self.sqpVOR])
+
+        // All three should be queryable
+        #expect(try db.navaid(byID: "SJC") != nil)
+        #expect(try db.navaid(byID: "OAK") != nil)
+        #expect(try db.navaid(byID: "SQP") != nil)
+    }
+
+    @Test func navaidInsertOrReplaceOverwrites() throws {
+        let db = try Self.makeTempDB()
+        try db.insertNavaid(Self.sjcVOR)
+
+        // Replace with updated name
+        let modified = Self.makeTestNavaid(id: "SJC", name: "San Jose Updated")
+        try db.insertNavaid(modified)
+
+        let fetched = try db.navaid(byID: "SJC")
+        #expect(fetched?.name == "San Jose Updated")
+    }
+
+    // MARK: - Navaids Near Coordinate (bounding box query)
+
+    @Test func navaidsNearCoordinate() throws {
+        let db = try Self.makeTempDB()
+        try db.insertNavaids([Self.sjcVOR, Self.oakVOR, Self.sqpVOR])
+
+        // Query near SJC with 20 NM radius — should include SJC and SQP
+        let sjcCoord = CLLocationCoordinate2D(latitude: 37.3626, longitude: -121.9291)
+        let results = try db.navaids(near: sjcCoord, radiusNM: 20.0)
+
+        let ids = Set(results.map(\.id))
+        #expect(ids.contains("SJC"))
+        #expect(ids.contains("SQP"))  // ~10 NM away
+    }
+
+    @Test func navaidsNearSmallRadius() throws {
+        let db = try Self.makeTempDB()
+        try db.insertNavaids([Self.sjcVOR, Self.oakVOR])
+
+        // Very small radius from SJC — Oakland is ~25 NM away, shouldn't appear
+        let sjcCoord = CLLocationCoordinate2D(latitude: 37.3626, longitude: -121.9291)
+        let results = try db.navaids(near: sjcCoord, radiusNM: 5.0)
+
+        let ids = Set(results.map(\.id))
+        #expect(ids.contains("SJC"))
+        #expect(!ids.contains("OAK"))
+    }
+
+    @Test func navaidsNearEmptyDB() throws {
+        let db = try Self.makeTempDB()
+
+        let coord = CLLocationCoordinate2D(latitude: 37.46, longitude: -122.12)
+        let results = try db.navaids(near: coord, radiusNM: 50.0)
+        #expect(results.isEmpty)
+    }
+
+    // MARK: - Weather Station Coordinate Resolution
+
+    @Test func airportCoordinateForStation() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirport(Self.kpao)
+
+        let coord = try db.airportCoordinate(forStation: "KPAO")
+        #expect(coord != nil)
+        #expect(coord?.latitude == 37.4611)
+        #expect(coord?.longitude == -122.1150)
+    }
+
+    @Test func airportCoordinateForUnknownStation() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirport(Self.kpao)
+
+        let coord = try db.airportCoordinate(forStation: "KXYZ")
+        #expect(coord == nil)
+    }
+
+    @Test func airportCoordinateMultipleStations() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirports([Self.kpao, Self.ksql, Self.koak])
+
+        let paoCoord = try db.airportCoordinate(forStation: "KPAO")
+        let sqlCoord = try db.airportCoordinate(forStation: "KSQL")
+        let oakCoord = try db.airportCoordinate(forStation: "KOAK")
+
+        #expect(paoCoord?.latitude == 37.4611)
+        #expect(sqlCoord?.latitude == 37.5119)
+        #expect(oakCoord?.latitude == 37.7213)
+    }
+
+    // MARK: - Navaid Optional Fields
+
+    @Test func navaidWithNilOptionalFields() throws {
+        let db = try Self.makeTempDB()
+        let navaid = Navaid(
+            id: "TST", name: "Test NDB", type: .ndb,
+            latitude: 37.0, longitude: -122.0, frequency: 350.0,
+            magneticVariation: nil, elevation: nil
+        )
+        try db.insertNavaid(navaid)
+
+        let fetched = try db.navaid(byID: "TST")
+        #expect(fetched != nil)
+        #expect(fetched?.type == .ndb)
+        #expect(fetched?.magneticVariation == nil)
+        #expect(fetched?.elevation == nil)
+    }
 }

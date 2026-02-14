@@ -46,6 +46,12 @@ final class PlaceholderDatabaseManager: DatabaseManagerProtocol, @unchecked Send
 
     func nearestAirports(to coordinate: CLLocationCoordinate2D, count: Int) async throws -> [Airport] { [] }
 
+    func navaid(byID id: String) async throws -> Navaid? { nil }
+
+    func navaids(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Navaid] { [] }
+
+    func airportCoordinate(forStation stationID: String) async throws -> CLLocationCoordinate2D? { nil }
+
     func cachedWeather(for stationID: String) async throws -> WeatherCache? { nil }
 
     func cacheWeather(_ weather: WeatherCache) async throws { /* no-op */ }

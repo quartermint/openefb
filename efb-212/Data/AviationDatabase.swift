@@ -337,6 +337,119 @@ final class AviationDatabase: @unchecked Sendable {
         }
     }
 
+    // MARK: - Navaid Data Import
+
+    /// Insert or replace a single navaid.
+    nonisolated func insertNavaid(_ navaid: Navaid) throws {
+        try dbPool.write { db in
+            try db.execute(
+                sql: """
+                    INSERT OR REPLACE INTO navaids
+                    (id, name, type, latitude, longitude, frequency, magneticVariation, elevation)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                arguments: [
+                    navaid.id,
+                    navaid.name,
+                    navaid.type.rawValue,
+                    navaid.latitude,
+                    navaid.longitude,
+                    navaid.frequency,
+                    navaid.magneticVariation,
+                    navaid.elevation
+                ]
+            )
+        }
+    }
+
+    /// Bulk insert navaids in a single transaction for performance.
+    nonisolated func insertNavaids(_ navaids: [Navaid]) throws {
+        try dbPool.write { db in
+            for navaid in navaids {
+                try db.execute(
+                    sql: """
+                        INSERT OR REPLACE INTO navaids
+                        (id, name, type, latitude, longitude, frequency, magneticVariation, elevation)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        navaid.id,
+                        navaid.name,
+                        navaid.type.rawValue,
+                        navaid.latitude,
+                        navaid.longitude,
+                        navaid.frequency,
+                        navaid.magneticVariation,
+                        navaid.elevation
+                    ]
+                )
+            }
+        }
+    }
+
+    // MARK: - Navaid Queries
+
+    /// Fetch a single navaid by its identifier.
+    nonisolated func navaid(byID id: String) throws -> Navaid? {
+        try dbPool.read { db in
+            guard let row = try Row.fetchOne(db, sql: "SELECT * FROM navaids WHERE id = ?", arguments: [id]) else {
+                return nil
+            }
+            return self.navaidFromRow(row)
+        }
+    }
+
+    /// Search navaids near a coordinate within a radius, using bounding box SQL.
+    /// 1 NM ~ 1/60 degree latitude.
+    nonisolated func navaids(near coordinate: CLLocationCoordinate2D, radiusNM: Double) throws -> [Navaid] {
+        let degreeOffset = radiusNM / 60.0
+        let minLat = coordinate.latitude - degreeOffset
+        let maxLat = coordinate.latitude + degreeOffset
+        // Longitude degrees shrink with latitude
+        let lonOffset = degreeOffset / max(cos(coordinate.latitude * .pi / 180.0), 0.01)
+        let minLon = coordinate.longitude - lonOffset
+        let maxLon = coordinate.longitude + lonOffset
+
+        return try dbPool.read { db in
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT * FROM navaids
+                WHERE latitude BETWEEN ? AND ?
+                  AND longitude BETWEEN ? AND ?
+            """, arguments: [minLat, maxLat, minLon, maxLon])
+
+            return rows.map { self.navaidFromRow($0) }
+        }
+    }
+
+    // MARK: - Airspace Queries
+
+    /// Return airspaces containing a coordinate at a given altitude.
+    /// TODO: Real implementation requires polygon geometry (point-in-polygon tests).
+    /// For now returns an empty array as a stub.
+    nonisolated func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Int) throws -> [Airspace] {
+        // TODO: Implement polygon-based containment check once airspace geometry is imported
+        return []
+    }
+
+    // MARK: - Weather Station Coordinate Resolution
+
+    /// Look up airport coordinates for a weather station ID (ICAO code).
+    /// Used to place weather dots on the map at the correct position.
+    nonisolated func airportCoordinate(forStation stationID: String) throws -> CLLocationCoordinate2D? {
+        try dbPool.read { db in
+            guard let row = try Row.fetchOne(
+                db,
+                sql: "SELECT latitude, longitude FROM airports WHERE icao = ?",
+                arguments: [stationID]
+            ) else {
+                return nil
+            }
+            let latitude: Double = row["latitude"]
+            let longitude: Double = row["longitude"]
+            return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+    }
+
     // MARK: - Weather Cache
 
     /// Fetch cached weather for a station.
@@ -430,6 +543,19 @@ final class AviationDatabase: @unchecked Sendable {
                 name: row["name"]
             )
         }
+    }
+
+    private nonisolated func navaidFromRow(_ row: Row) -> Navaid {
+        Navaid(
+            id: row["id"],
+            name: row["name"],
+            type: NavaidType(rawValue: row["type"]) ?? .vor,
+            latitude: row["latitude"],
+            longitude: row["longitude"],
+            frequency: row["frequency"],
+            magneticVariation: row["magneticVariation"],
+            elevation: row["elevation"]
+        )
     }
 
     private nonisolated func airportFromRow(_ row: Row, runways: [Runway], frequencies: [Frequency]) -> Airport {

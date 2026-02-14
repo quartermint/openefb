@@ -145,7 +145,7 @@ struct Frequency: Identifiable, Codable, Equatable, Sendable {
 
 // MARK: - Navaid
 
-struct Navaid: Identifiable, Codable, Equatable {
+struct Navaid: Identifiable, Codable, Equatable, Sendable {
     let id: String                       // e.g., "SJC"
     let name: String                     // "San Jose"
     let type: NavaidType
@@ -155,6 +155,26 @@ struct Navaid: Identifiable, Codable, Equatable {
     let magneticVariation: Double?
     let elevation: Double?               // feet MSL
 
+    nonisolated init(
+        id: String,
+        name: String,
+        type: NavaidType,
+        latitude: Double,
+        longitude: Double,
+        frequency: Double,
+        magneticVariation: Double? = nil,
+        elevation: Double? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.latitude = latitude
+        self.longitude = longitude
+        self.frequency = frequency
+        self.magneticVariation = magneticVariation
+        self.elevation = elevation
+    }
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
@@ -162,7 +182,7 @@ struct Navaid: Identifiable, Codable, Equatable {
 
 // MARK: - Airspace
 
-struct Airspace: Identifiable, Codable, Equatable {
+struct Airspace: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     let classification: AirspaceClass
     let name: String                     // "SFO Class B"

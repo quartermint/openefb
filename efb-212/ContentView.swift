@@ -62,7 +62,9 @@ struct ContentView: View {
                 mapViewModel = MapViewModel(
                     databaseManager: appState.databaseManager,
                     mapService: mapService,
-                    locationManager: appState.locationManager
+                    locationManager: appState.locationManager,
+                    weatherService: appState.weatherService,
+                    appState: appState
                 )
             }
             if flightPlanViewModel == nil {

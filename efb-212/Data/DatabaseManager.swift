@@ -69,6 +69,25 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
         return try db.nearestAirports(to: coordinate, count: count)
     }
 
+    // MARK: - Navaids
+
+    nonisolated func navaid(byID id: String) async throws -> Navaid? {
+        guard let db = aviationDB else { return nil }
+        return try db.navaid(byID: id)
+    }
+
+    nonisolated func navaids(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Navaid] {
+        guard let db = aviationDB else { return [] }
+        return try db.navaids(near: coordinate, radiusNM: radiusNM)
+    }
+
+    // MARK: - Weather Station Coordinate Resolution
+
+    nonisolated func airportCoordinate(forStation stationID: String) async throws -> CLLocationCoordinate2D? {
+        guard let db = aviationDB else { return nil }
+        return try db.airportCoordinate(forStation: stationID)
+    }
+
     // MARK: - Weather Cache (ephemeral GRDB)
 
     nonisolated func cachedWeather(for stationID: String) async throws -> WeatherCache? {
@@ -95,7 +114,7 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
 
     nonisolated private static let seedDataLoadedKey = "com.efb212.seedDataLoaded"
     nonisolated private static let seedDataVersionKey = "com.efb212.seedDataVersion"
-    nonisolated private static let currentSeedVersion = 1
+    nonisolated private static let currentSeedVersion = 2
 
     /// Whether seed data has already been loaded into the database.
     nonisolated var isSeedDataLoaded: Bool {
@@ -113,11 +132,14 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
         let airports = AirportSeedData.allAirports()
         try db.insertAirports(airports)
 
+        let navaids = NavaidSeedData.allNavaids()
+        try db.insertNavaids(navaids)
+
         UserDefaults.standard.set(true, forKey: Self.seedDataLoadedKey)
         UserDefaults.standard.set(Self.currentSeedVersion, forKey: Self.seedDataVersionKey)
 
         let count = try db.airportCount()
-        print("Loaded \(count) airports from seed data (version \(Self.currentSeedVersion))")
+        print("Loaded \(count) airports and \(navaids.count) navaids from seed data (version \(Self.currentSeedVersion))")
     }
 
     /// Load seed data if it has not yet been loaded. Safe to call on every launch.
