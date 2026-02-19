@@ -224,6 +224,14 @@ final class MapService: NSObject, ObservableObject {
         if let navaidLayer = style.layer(withIdentifier: "navaids") {
             navaidLayer.isVisible = activeLayers.contains(.navaids) && showDetail
         }
+
+        // TFR overlays — visible at all zoom levels (safety-critical)
+        let showTFRs = activeLayers.contains(.tfrs)
+        for ids in activeTFRIDs {
+            if let tfrLayer = style.layer(withIdentifier: ids.layerID) {
+                tfrLayer.isVisible = showTFRs
+            }
+        }
     }
 
     // MARK: - Airport Annotations
@@ -434,6 +442,234 @@ final class MapService: NSObject, ObservableObject {
         if !navaidAnnotations.isEmpty {
             mapView.removeAnnotations(navaidAnnotations)
         }
+    }
+
+    // MARK: - Airspace Polygons
+
+    /// Tracks active airspace source/layer identifiers for cleanup.
+    private var activeAirspaceIDs: [(sourceID: String, layerID: String)] = []
+
+    /// Add airspace boundary polygons to the map.
+    /// Removes any existing airspace polygons before adding new ones.
+    /// Colors by classification: Bravo=blue, Charlie=purple, Delta=orange.
+    /// - Parameter airspaces: Array of Airspace models to display.
+    func addAirspacePolygons(_ airspaces: [Airspace]) {
+        removeAirspacePolygons()
+
+        guard let mapView = mapView, let style = mapView.style else { return }
+        guard !airspaces.isEmpty else { return }
+
+        for (index, airspace) in airspaces.enumerated() {
+            let sourceID = "airspace-source-\(index)"
+            let fillLayerID = "airspace-fill-\(index)"
+            let outlineLayerID = "airspace-outline-\(index)"
+
+            let shape: MLNShape
+
+            switch airspace.geometry {
+            case .polygon(let coordinates):
+                var coords = coordinates.map { pair in
+                    CLLocationCoordinate2D(
+                        latitude: pair.count >= 1 ? pair[0] : 0,
+                        longitude: pair.count >= 2 ? pair[1] : 0
+                    )
+                }
+                guard coords.count >= 3 else { continue }
+                let polygon = MLNPolygon(coordinates: &coords, count: UInt(coords.count))
+                shape = polygon
+
+            case .circle(let center, let radiusNM):
+                guard center.count >= 2 else { continue }
+                let centerCoord = CLLocationCoordinate2D(latitude: center[0], longitude: center[1])
+                var coords = Self.circleCoordinates(center: centerCoord, radiusNM: radiusNM, points: 36)
+                let polygon = MLNPolygon(coordinates: &coords, count: UInt(coords.count))
+                shape = polygon
+            }
+
+            let source = MLNShapeSource(identifier: sourceID, shape: shape, options: nil)
+            style.addSource(source)
+
+            let color = Self.airspaceColor(for: airspace.classification)
+
+            // Semi-transparent fill
+            let fillLayer = MLNFillStyleLayer(identifier: fillLayerID, source: source)
+            fillLayer.fillColor = NSExpression(forConstantValue: color)
+            fillLayer.fillOpacity = NSExpression(forConstantValue: 0.12)
+            style.addLayer(fillLayer)
+
+            // Colored outline
+            let outlineLayer = MLNLineStyleLayer(identifier: outlineLayerID, source: source)
+            outlineLayer.lineColor = NSExpression(forConstantValue: color)
+            outlineLayer.lineWidth = NSExpression(forConstantValue: 1.5)
+            outlineLayer.lineDashPattern = NSExpression(forConstantValue: [4, 2])
+            style.addLayer(outlineLayer)
+
+            activeAirspaceIDs.append((sourceID: sourceID, layerID: fillLayerID))
+            activeAirspaceIDs.append((sourceID: sourceID, layerID: outlineLayerID))
+        }
+    }
+
+    /// Remove all airspace polygon overlays from the map.
+    func removeAirspacePolygons() {
+        guard let style = mapView?.style else { return }
+
+        var sourceIDs = Set<String>()
+
+        for ids in activeAirspaceIDs {
+            if let layer = style.layer(withIdentifier: ids.layerID) {
+                style.removeLayer(layer)
+            }
+            sourceIDs.insert(ids.sourceID)
+        }
+
+        for sourceID in sourceIDs {
+            if let source = style.source(withIdentifier: sourceID) {
+                style.removeSource(source)
+            }
+        }
+
+        activeAirspaceIDs.removeAll()
+    }
+
+    /// Map AirspaceClass to UIColor for polygon rendering.
+    /// Bravo = blue, Charlie = purple, Delta = orange, others = gray.
+    private static func airspaceColor(for classification: AirspaceClass) -> UIColor {
+        switch classification {
+        case .bravo:      return .systemBlue
+        case .charlie:    return .systemPurple
+        case .delta:      return .systemOrange
+        case .echo:       return .systemGray
+        case .restricted, .prohibited: return .systemRed
+        case .moa:        return .systemBrown
+        case .alert, .warning: return .systemYellow
+        case .tfr:        return .systemRed
+        case .golf:       return .systemGray
+        }
+    }
+
+    // MARK: - TFR Overlays
+
+    /// Tracks active TFR source/layer identifiers for cleanup.
+    private var activeTFRIDs: [(sourceID: String, layerID: String)] = []
+
+    /// Add TFR overlays to the map as red semi-transparent polygons/circles.
+    /// Removes any existing TFR overlays before adding new ones.
+    /// - Parameter tfrs: Array of active TFRs to display.
+    func addTFROverlays(_ tfrs: [TFR]) {
+        removeTFROverlays()
+
+        guard let mapView = mapView, let style = mapView.style else { return }
+        guard !tfrs.isEmpty else { return }
+
+        for (index, tfr) in tfrs.enumerated() {
+            let sourceID = "tfr-source-\(index)"
+            let fillLayerID = "tfr-fill-\(index)"
+            let outlineLayerID = "tfr-outline-\(index)"
+
+            let shape: MLNShape
+
+            if let radiusNM = tfr.radiusNM, radiusNM > 0 {
+                // Circular TFR — approximate circle as a 36-point polygon
+                let coordinates = Self.circleCoordinates(
+                    center: tfr.coordinate,
+                    radiusNM: radiusNM,
+                    points: 36
+                )
+                var coords = coordinates
+                let polygon = MLNPolygon(coordinates: &coords, count: UInt(coords.count))
+                shape = polygon
+            } else if !tfr.boundaries.isEmpty {
+                // Polygon TFR — use boundary coordinates
+                var coords = tfr.boundaries.map { pair in
+                    CLLocationCoordinate2D(
+                        latitude: pair.count >= 1 ? pair[0] : 0,
+                        longitude: pair.count >= 2 ? pair[1] : 0
+                    )
+                }
+                let polygon = MLNPolygon(coordinates: &coords, count: UInt(coords.count))
+                shape = polygon
+            } else {
+                // Fallback — point marker with small default radius (1 NM)
+                var coords = Self.circleCoordinates(
+                    center: tfr.coordinate,
+                    radiusNM: 1.0,
+                    points: 36
+                )
+                let polygon = MLNPolygon(coordinates: &coords, count: UInt(coords.count))
+                shape = polygon
+            }
+
+            let source = MLNShapeSource(identifier: sourceID, shape: shape, options: nil)
+            style.addSource(source)
+
+            // Semi-transparent red fill
+            let fillLayer = MLNFillStyleLayer(identifier: fillLayerID, source: source)
+            fillLayer.fillColor = NSExpression(forConstantValue: UIColor.systemRed)
+            fillLayer.fillOpacity = NSExpression(forConstantValue: 0.25)
+            style.addLayer(fillLayer)
+
+            // Red outline
+            let outlineLayer = MLNLineStyleLayer(identifier: outlineLayerID, source: source)
+            outlineLayer.lineColor = NSExpression(forConstantValue: UIColor.systemRed)
+            outlineLayer.lineWidth = NSExpression(forConstantValue: 2.0)
+            style.addLayer(outlineLayer)
+
+            activeTFRIDs.append((sourceID: sourceID, layerID: fillLayerID))
+            activeTFRIDs.append((sourceID: sourceID, layerID: outlineLayerID))
+        }
+    }
+
+    /// Remove all TFR overlays from the map.
+    func removeTFROverlays() {
+        guard let style = mapView?.style else { return }
+
+        // Collect unique source IDs to remove after layers
+        var sourceIDs = Set<String>()
+
+        for ids in activeTFRIDs {
+            if let layer = style.layer(withIdentifier: ids.layerID) {
+                style.removeLayer(layer)
+            }
+            sourceIDs.insert(ids.sourceID)
+        }
+
+        for sourceID in sourceIDs {
+            if let source = style.source(withIdentifier: sourceID) {
+                style.removeSource(source)
+            }
+        }
+
+        activeTFRIDs.removeAll()
+    }
+
+    /// Generate coordinates for an approximate circle on the map.
+    /// - Parameters:
+    ///   - center: Center coordinate.
+    ///   - radiusNM: Radius in nautical miles.
+    ///   - points: Number of polygon points (higher = smoother circle).
+    /// - Returns: Array of coordinates forming the circle polygon.
+    private static func circleCoordinates(
+        center: CLLocationCoordinate2D,
+        radiusNM: Double,
+        points: Int
+    ) -> [CLLocationCoordinate2D] {
+        // 1 NM = 1/60 degree of latitude (approximately)
+        let radiusDegLat = radiusNM / 60.0
+        // Longitude degrees per NM varies with latitude
+        let radiusDegLon = radiusNM / (60.0 * cos(center.latitude * .pi / 180.0))
+
+        var coordinates: [CLLocationCoordinate2D] = []
+        for i in 0..<points {
+            let angle = Double(i) * (2.0 * .pi / Double(points))
+            let lat = center.latitude + radiusDegLat * sin(angle)
+            let lon = center.longitude + radiusDegLon * cos(angle)
+            coordinates.append(CLLocationCoordinate2D(latitude: lat, longitude: lon))
+        }
+        // Close the polygon
+        if let first = coordinates.first {
+            coordinates.append(first)
+        }
+        return coordinates
     }
 
     // MARK: - User Location

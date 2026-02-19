@@ -21,6 +21,12 @@ final class MapViewModel: ObservableObject {
     /// Navaids currently visible in the map viewport.
     @Published var visibleNavaids: [Navaid] = []
 
+    /// Airspaces currently visible in the map viewport.
+    @Published var visibleAirspaces: [Airspace] = []
+
+    /// Active TFRs currently displayed on the map.
+    @Published var visibleTFRs: [TFR] = []
+
     /// Currently selected airport (tapped on map).
     @Published var selectedAirport: Airport?
 
@@ -34,6 +40,7 @@ final class MapViewModel: ObservableObject {
 
     private let databaseManager: any DatabaseManagerProtocol
     private let weatherService: any WeatherServiceProtocol
+    private let tfrService: any TFRServiceProtocol
     private let locationManager: (any LocationManagerProtocol)?
     private weak var appState: AppState?
     let mapService: MapService
@@ -56,12 +63,14 @@ final class MapViewModel: ObservableObject {
         mapService: MapService,
         locationManager: (any LocationManagerProtocol)? = nil,
         weatherService: any WeatherServiceProtocol = PlaceholderWeatherService(),
+        tfrService: any TFRServiceProtocol = PlaceholderTFRService(),
         appState: AppState? = nil
     ) {
         self.databaseManager = databaseManager
         self.mapService = mapService
         self.locationManager = locationManager
         self.weatherService = weatherService
+        self.tfrService = tfrService
         self.appState = appState
         setupMapServiceDelegate()
         subscribeToLocationUpdates()
@@ -124,8 +133,14 @@ final class MapViewModel: ObservableObject {
             // Load and display navaids if the layer is active
             await loadNavaidsForRegion(center: center, radiusNM: clampedRadius)
 
+            // Load and display airspace polygons if the layer is active
+            await loadAirspacesForRegion(center: center, radiusNM: clampedRadius)
+
             // Fetch and display weather dots if the layer is active
             await loadWeatherForVisibleAirports(airports)
+
+            // Fetch and display TFR overlays if the layer is active
+            await loadTFRsForRegion(center: center, radiusNM: clampedRadius)
         } catch {
             lastError = .airportNotFound("region query")
         }
@@ -152,6 +167,30 @@ final class MapViewModel: ObservableObject {
         } catch {
             visibleNavaids = []
             mapService.removeNavaidAnnotations()
+        }
+    }
+
+    // MARK: - Airspace Loading
+
+    /// Load airspaces within a radius of the given center coordinate and display on map.
+    /// Only loads when the airspace layer is enabled in AppState.
+    /// - Parameters:
+    ///   - center: Center of the visible map region.
+    ///   - radiusNM: Search radius in nautical miles.
+    func loadAirspacesForRegion(center: CLLocationCoordinate2D, radiusNM: Double) async {
+        guard let appState, appState.visibleLayers.contains(.airspace) else {
+            visibleAirspaces = []
+            mapService.removeAirspacePolygons()
+            return
+        }
+
+        do {
+            let airspaces = try await databaseManager.airspaces(near: center, radiusNM: radiusNM)
+            visibleAirspaces = airspaces
+            mapService.addAirspacePolygons(airspaces)
+        } catch {
+            visibleAirspaces = []
+            mapService.removeAirspacePolygons()
         }
     }
 
@@ -188,6 +227,31 @@ final class MapViewModel: ObservableObject {
             // Weather fetch failure is non-critical — dots just won't appear.
             // Remove any stale dots rather than showing outdated data.
             mapService.removeWeatherDots()
+        }
+    }
+
+    // MARK: - TFR Loading
+
+    /// Fetch active TFRs near the visible region and display on the map.
+    /// Only fetches when the TFRs layer is enabled in AppState.
+    /// - Parameters:
+    ///   - center: Center of the visible map region.
+    ///   - radiusNM: Search radius in nautical miles.
+    func loadTFRsForRegion(center: CLLocationCoordinate2D, radiusNM: Double) async {
+        guard let appState, appState.visibleLayers.contains(.tfrs) else {
+            visibleTFRs = []
+            mapService.removeTFROverlays()
+            return
+        }
+
+        do {
+            let tfrs = try await tfrService.fetchActiveTFRs(near: center, radiusNM: radiusNM)
+            visibleTFRs = tfrs
+            mapService.addTFROverlays(tfrs)
+        } catch {
+            // TFR fetch failure is non-critical — overlays just won't appear.
+            visibleTFRs = []
+            mapService.removeTFROverlays()
         }
     }
 

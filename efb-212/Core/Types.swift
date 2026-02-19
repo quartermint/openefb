@@ -134,6 +134,15 @@ enum NavaidType: String, Codable, CaseIterable {
     case ndbDme
 }
 
+enum TFRType: String, Codable, CaseIterable, Sendable {
+    case security       // National security (e.g., Washington DC SFRA)
+    case vip            // Presidential/VIP movement
+    case hazard         // Hazardous operations (e.g., firefighting, space launch)
+    case airshow        // Air show / aerial demo
+    case stadium        // Sporting event stadium TFR (3 NM, surface to 3000 AGL)
+    case other          // Catch-all
+}
+
 enum AirspaceClass: String, Codable, CaseIterable {
     case bravo
     case charlie
@@ -233,7 +242,37 @@ enum CertificateType: String, Codable, CaseIterable {
 
 // MARK: - Airspace Geometry
 
-enum AirspaceGeometry: Codable, Equatable {
+enum AirspaceGeometry: Codable, Equatable, Sendable {
     case polygon(coordinates: [[Double]])  // Array of [lat, lon] pairs
     case circle(center: [Double], radiusNM: Double)  // [lat, lon], radius in NM
+
+    // Explicit nonisolated Codable to avoid MainActor isolation warnings in GRDB context
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let coordinates = try container.decodeIfPresent([[Double]].self, forKey: .coordinates) {
+            self = .polygon(coordinates: coordinates)
+        } else if let center = try container.decodeIfPresent([Double].self, forKey: .center),
+                  let radiusNM = try container.decodeIfPresent(Double.self, forKey: .radiusNM) {
+            self = .circle(center: center, radiusNM: radiusNM)
+        } else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid AirspaceGeometry")
+            )
+        }
+    }
+
+    nonisolated func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .polygon(let coordinates):
+            try container.encode(coordinates, forKey: .coordinates)
+        case .circle(let center, let radiusNM):
+            try container.encode(center, forKey: .center)
+            try container.encode(radiusNM, forKey: .radiusNM)
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case coordinates, center, radiusNM
+    }
 }

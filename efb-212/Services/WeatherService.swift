@@ -117,13 +117,17 @@ nonisolated actor WeatherService: WeatherServiceProtocol {
     /// URLSession for API requests.
     private let session: URLSession
 
+    /// Database manager for persistent weather cache (GRDB).
+    private let databaseManager: (any DatabaseManagerProtocol)?
+
     /// Base URL for NOAA Aviation Weather API.
     private let baseURL = "https://aviationweather.gov/api/data"
 
     // MARK: - Init
 
-    init(session: URLSession = .shared) {
+    init(session: URLSession = .shared, databaseManager: (any DatabaseManagerProtocol)? = nil) {
         self.session = session
+        self.databaseManager = databaseManager
     }
 
     // MARK: - WeatherServiceProtocol
@@ -131,9 +135,16 @@ nonisolated actor WeatherService: WeatherServiceProtocol {
     func fetchMETAR(for stationID: String) async throws -> WeatherCache {
         let id = stationID.uppercased()
 
-        // Return cached data if fresh
+        // Return in-memory cached data if fresh
         if let cached = cache[id], cached.age < cacheTTL {
             return cached
+        }
+
+        // Check GRDB persistent cache on in-memory miss
+        if let dbCached = try? await databaseManager?.cachedWeather(for: id),
+           dbCached.age < cacheTTL {
+            cache[id] = dbCached
+            return dbCached
         }
 
         let urlString = "\(baseURL)/metar?ids=\(id)&format=json"
@@ -160,6 +171,10 @@ nonisolated actor WeatherService: WeatherServiceProtocol {
             }
 
             cache[id] = weather
+
+            // Write through to GRDB persistent cache
+            try? await databaseManager?.cacheWeather(weather)
+
             return weather
         } catch let error as EFBError {
             // Return cached data on error if available
@@ -191,9 +206,13 @@ nonisolated actor WeatherService: WeatherServiceProtocol {
                 )
             }
 
-            // Update cache with TAF
+            // Update in-memory cache with TAF
             if cache[id] != nil {
                 cache[id]?.taf = rawTAF
+                // Write through updated entry to GRDB
+                if let updated = cache[id] {
+                    try? await databaseManager?.cacheWeather(updated)
+                }
             }
 
             return rawTAF
@@ -232,6 +251,9 @@ nonisolated actor WeatherService: WeatherServiceProtocol {
 
                 cache[stationID] = weather
                 results.append(weather)
+
+                // Write through to GRDB persistent cache
+                try? await databaseManager?.cacheWeather(weather)
             }
 
             return results
@@ -247,6 +269,34 @@ nonisolated actor WeatherService: WeatherServiceProtocol {
         // Cannot safely access actor state synchronously — return nil.
         // Callers should use fetchMETAR for current data.
         return nil
+    }
+
+    // MARK: - Cache Maintenance
+
+    /// Remove weather entries older than 1 hour from both in-memory and GRDB caches.
+    func cleanupStaleCache() async {
+        let staleThreshold: TimeInterval = 3600  // 1 hour
+
+        // Clean in-memory cache
+        let now = Date()
+        cache = cache.filter { _, value in
+            now.timeIntervalSince(value.fetchedAt) < staleThreshold
+        }
+
+        // Clean GRDB cache
+        guard let databaseManager else { return }
+        do {
+            let staleIDs = try await databaseManager.staleWeatherStations(olderThan: staleThreshold)
+            if !staleIDs.isEmpty {
+                try await databaseManager.clearWeatherCache()
+                // Re-persist only the fresh in-memory entries
+                for (_, weather) in cache {
+                    try await databaseManager.cacheWeather(weather)
+                }
+            }
+        } catch {
+            // Stale cleanup is best-effort — don't propagate errors
+        }
     }
 
     // MARK: - Parsing

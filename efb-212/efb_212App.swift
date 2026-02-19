@@ -17,7 +17,7 @@ struct efb_212App: App {
         // Production dependencies — real service implementations.
         let locationManager = LocationManager()
         let databaseManager = DatabaseManager()
-        let weatherService = WeatherService()
+        let weatherService = WeatherService(databaseManager: databaseManager)
 
         let appState = AppState(
             locationManager: locationManager,

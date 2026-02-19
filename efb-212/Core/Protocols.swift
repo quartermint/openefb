@@ -17,6 +17,7 @@ protocol DatabaseManagerProtocol: Sendable {
     func airports(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Airport]
     func searchAirports(query: String, limit: Int) async throws -> [Airport]
     func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Double) async throws -> [Airspace]
+    func airspaces(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Airspace]
     func nearestAirports(to coordinate: CLLocationCoordinate2D, count: Int) async throws -> [Airport]
 
     // Navaids
@@ -57,6 +58,17 @@ protocol WeatherServiceProtocol: Sendable {
     func fetchTAF(for stationID: String) async throws -> String
     func fetchWeatherForStations(_ stationIDs: [String]) async throws -> [WeatherCache]
     func cachedWeather(for stationID: String) -> WeatherCache?
+}
+
+// MARK: - TFR Service Protocol
+
+protocol TFRServiceProtocol: Sendable {
+    /// Fetch active TFRs near a coordinate within the given radius.
+    /// - Parameters:
+    ///   - coordinate: Center coordinate for the search area.
+    ///   - radiusNM: Search radius in nautical miles.
+    /// - Returns: Array of active TFRs within the search area.
+    func fetchActiveTFRs(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [TFR]
 }
 
 // MARK: - Network Manager Protocol

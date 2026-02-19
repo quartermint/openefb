@@ -509,4 +509,193 @@ struct AviationDatabaseTests {
         #expect(fetched?.magneticVariation == nil)
         #expect(fetched?.elevation == nil)
     }
+
+    // MARK: - Airspace Insert & Lookup
+
+    static func makeTestAirspace(
+        id: UUID = UUID(),
+        classification: AirspaceClass = .charlie,
+        name: String = "Test Class C",
+        floor: Int = 0,
+        ceiling: Int = 4000,
+        geometry: AirspaceGeometry = .circle(center: [37.3626, -121.9291], radiusNM: 5.0)
+    ) -> Airspace {
+        Airspace(id: id, classification: classification, name: name,
+                 floor: floor, ceiling: ceiling, geometry: geometry)
+    }
+
+    static let sjcClassC = makeTestAirspace(
+        classification: .charlie, name: "SJC Class C",
+        floor: 0, ceiling: 4000,
+        geometry: .circle(center: [37.3626, -121.9291], radiusNM: 5.0)
+    )
+
+    static let sfoClassB = makeTestAirspace(
+        classification: .bravo, name: "SFO Class B Inner",
+        floor: 0, ceiling: 10000,
+        geometry: .polygon(coordinates: [
+            [37.55, -122.45], [37.55, -122.30],
+            [37.68, -122.30], [37.68, -122.45],
+            [37.55, -122.45]
+        ])
+    )
+
+    static let paoClassD = makeTestAirspace(
+        classification: .delta, name: "PAO Class D",
+        floor: 0, ceiling: 2500,
+        geometry: .circle(center: [37.4611, -122.1150], radiusNM: 4.0)
+    )
+
+    @Test func insertAndLookupAirspace() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspace(Self.sjcClassC)
+
+        #expect(try db.airspaceCount() == 1)
+    }
+
+    @Test func bulkInsertAirspaces() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspaces([Self.sjcClassC, Self.sfoClassB, Self.paoClassD])
+
+        #expect(try db.airspaceCount() == 3)
+    }
+
+    @Test func airspacesContainingPointInsideCircle() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspace(Self.sjcClassC)
+
+        // SJC center (37.3626, -121.9291) — query from inside the 5 NM circle
+        let sjcCoord = CLLocationCoordinate2D(latitude: 37.3626, longitude: -121.9291)
+        let results = try db.airspaces(containing: sjcCoord, altitude: 2000)
+
+        #expect(results.count == 1)
+        #expect(results.first?.name == "SJC Class C")
+    }
+
+    @Test func airspacesContainingPointInsidePolygon() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspace(Self.sfoClassB)
+
+        // Point inside the polygon (SFO area)
+        let inside = CLLocationCoordinate2D(latitude: 37.62, longitude: -122.38)
+        let results = try db.airspaces(containing: inside, altitude: 5000)
+
+        #expect(results.count == 1)
+        #expect(results.first?.name == "SFO Class B Inner")
+    }
+
+    @Test func airspacesExcludesOutsidePoint() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspaces([Self.sjcClassC, Self.sfoClassB])
+
+        // Point well outside both airspaces (JFK area)
+        let outside = CLLocationCoordinate2D(latitude: 40.64, longitude: -73.78)
+        let results = try db.airspaces(containing: outside, altitude: 2000)
+
+        #expect(results.isEmpty)
+    }
+
+    @Test func airspacesExcludesByAltitude() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspace(Self.sjcClassC)  // ceiling 4000
+
+        // Inside the circle but above the ceiling
+        let sjcCoord = CLLocationCoordinate2D(latitude: 37.3626, longitude: -121.9291)
+        let results = try db.airspaces(containing: sjcCoord, altitude: 5000)
+
+        #expect(results.isEmpty)
+    }
+
+    @Test func airspacesNearCoordinate() throws {
+        let db = try Self.makeTempDB()
+        try db.insertAirspaces([Self.sjcClassC, Self.sfoClassB, Self.paoClassD])
+
+        // Query near KPAO — should find PAO Class D and possibly SJC Class C
+        let paoCoord = CLLocationCoordinate2D(latitude: 37.4611, longitude: -122.1150)
+        let results = try db.airspaces(near: paoCoord, radiusNM: 20.0)
+
+        let names = Set(results.map(\.name))
+        #expect(names.contains("PAO Class D"))
+    }
+
+    // MARK: - TFR Model Tests
+
+    @Test func tfrIsActiveWhenCurrentlyInEffect() {
+        let tfr = TFR(
+            id: "FDC 4/0001", type: .stadium, description: "Test TFR",
+            effectiveDate: Date(timeIntervalSinceNow: -3600),
+            expirationDate: Date(timeIntervalSinceNow: 3600),
+            latitude: 37.40, longitude: -121.97
+        )
+        #expect(tfr.isActive)
+    }
+
+    @Test func tfrIsNotActiveWhenExpired() {
+        let tfr = TFR(
+            id: "FDC 4/0002", type: .vip, description: "Expired TFR",
+            effectiveDate: Date(timeIntervalSinceNow: -7200),
+            expirationDate: Date(timeIntervalSinceNow: -3600),
+            latitude: 37.44, longitude: -122.14
+        )
+        #expect(!tfr.isActive)
+    }
+
+    @Test func tfrIsNotActiveWhenFuture() {
+        let tfr = TFR(
+            id: "FDC 4/0003", type: .airshow, description: "Future TFR",
+            effectiveDate: Date(timeIntervalSinceNow: 3600),
+            expirationDate: Date(timeIntervalSinceNow: 7200),
+            latitude: 37.41, longitude: -122.05
+        )
+        #expect(!tfr.isActive)
+    }
+
+    @Test func tfrCoordinateProperty() {
+        let tfr = TFR(
+            id: "FDC 4/0004", type: .hazard, description: "Test",
+            effectiveDate: Date(), expirationDate: Date(timeIntervalSinceNow: 3600),
+            latitude: 37.175, longitude: -122.227
+        )
+        #expect(tfr.coordinate.latitude == 37.175)
+        #expect(tfr.coordinate.longitude == -122.227)
+    }
+
+    // MARK: - TFR Service Tests
+
+    @Test func tfrServiceFetchReturnsResults() async throws {
+        let service = TFRService()
+        let bayAreaCoord = CLLocationCoordinate2D(latitude: 37.46, longitude: -122.12)
+        let tfrs = try await service.fetchActiveTFRs(near: bayAreaCoord, radiusNM: 50.0)
+
+        #expect(!tfrs.isEmpty, "Stub TFR service should return sample TFRs near Bay Area")
+        #expect(tfrs.allSatisfy { $0.isActive }, "All returned TFRs should be active")
+    }
+
+    @Test func tfrServiceFiltersOutDistantTFRs() async throws {
+        let service = TFRService()
+        // Query from New York — Bay Area TFRs should not appear
+        let nyCoord = CLLocationCoordinate2D(latitude: 40.64, longitude: -73.78)
+        let tfrs = try await service.fetchActiveTFRs(near: nyCoord, radiusNM: 50.0)
+
+        #expect(tfrs.isEmpty, "No Bay Area TFRs should appear near New York")
+    }
+
+    // MARK: - AirspaceGeometry Codable
+
+    @Test func airspaceGeometryCircleRoundTrip() throws {
+        let geometry = AirspaceGeometry.circle(center: [37.46, -122.12], radiusNM: 5.0)
+        let data = try JSONEncoder().encode(geometry)
+        let decoded = try JSONDecoder().decode(AirspaceGeometry.self, from: data)
+        #expect(geometry == decoded)
+    }
+
+    @Test func airspaceGeometryPolygonRoundTrip() throws {
+        let geometry = AirspaceGeometry.polygon(coordinates: [
+            [37.55, -122.45], [37.55, -122.30],
+            [37.68, -122.30], [37.68, -122.45]
+        ])
+        let data = try JSONEncoder().encode(geometry)
+        let decoded = try JSONDecoder().decode(AirspaceGeometry.self, from: data)
+        #expect(geometry == decoded)
+    }
 }

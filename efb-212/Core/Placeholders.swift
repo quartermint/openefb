@@ -44,6 +44,8 @@ final class PlaceholderDatabaseManager: DatabaseManagerProtocol, @unchecked Send
 
     func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Double) async throws -> [Airspace] { [] }
 
+    func airspaces(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Airspace] { [] }
+
     func nearestAirports(to coordinate: CLLocationCoordinate2D, count: Int) async throws -> [Airport] { [] }
 
     func navaid(byID id: String) async throws -> Navaid? { nil }
@@ -86,6 +88,17 @@ final class PlaceholderWeatherService: WeatherServiceProtocol, @unchecked Sendab
     }
 
     func cachedWeather(for stationID: String) -> WeatherCache? { nil }
+}
+
+// MARK: - PlaceholderTFRService
+
+/// Stub TFR service — returns empty array.
+/// TFRServiceProtocol requires Sendable; this MainActor class uses @unchecked Sendable.
+final class PlaceholderTFRService: TFRServiceProtocol, @unchecked Sendable {
+
+    func fetchActiveTFRs(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [TFR] {
+        []
+    }
 }
 
 // MARK: - PlaceholderError

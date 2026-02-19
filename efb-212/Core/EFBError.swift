@@ -33,6 +33,9 @@ enum EFBError: LocalizedError, Identifiable {
     // NASR Import
     case nasrImportFailed(underlying: Error)
 
+    // TFR
+    case tfrFetchFailed(underlying: Error)
+
     // Network
     case networkUnavailable
 
@@ -63,6 +66,8 @@ enum EFBError: LocalizedError, Identifiable {
             return "databaseMigrationFailed"
         case .nasrImportFailed:
             return "nasrImportFailed"
+        case .tfrFetchFailed:
+            return "tfrFetchFailed"
         case .networkUnavailable:
             return "networkUnavailable"
         case .airportNotFound(let icao):
@@ -107,6 +112,9 @@ enum EFBError: LocalizedError, Identifiable {
         case .nasrImportFailed(let underlying):
             return "NASR data import failed: \(underlying.localizedDescription). Try again or download a fresh data set."
 
+        case .tfrFetchFailed(let underlying):
+            return "Unable to fetch TFR data: \(underlying.localizedDescription)"
+
         case .networkUnavailable:
             return "No network connection. Weather and chart downloads are unavailable."
 
@@ -139,6 +147,8 @@ enum EFBError: LocalizedError, Identifiable {
             return .critical
         case .nasrImportFailed:
             return .error
+        case .tfrFetchFailed:
+            return .warning
         case .networkUnavailable:
             return .warning
         case .airportNotFound:

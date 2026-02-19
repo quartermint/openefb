@@ -28,8 +28,15 @@ final class MockDatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
         }
     }
 
+    // Airspaces
+    var airspacesData: [Airspace] = []
+
     func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Double) async throws -> [Airspace] {
-        []
+        airspacesData
+    }
+
+    func airspaces(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Airspace] {
+        airspacesData
     }
 
     func nearestAirports(to coordinate: CLLocationCoordinate2D, count: Int) async throws -> [Airport] {

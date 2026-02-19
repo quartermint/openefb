@@ -189,6 +189,75 @@ struct Airspace: Identifiable, Codable, Equatable, Sendable {
     let floor: Int                       // feet MSL (0 = surface)
     let ceiling: Int                     // feet MSL
     let geometry: AirspaceGeometry
+
+    nonisolated init(
+        id: UUID = UUID(),
+        classification: AirspaceClass,
+        name: String,
+        floor: Int,
+        ceiling: Int,
+        geometry: AirspaceGeometry
+    ) {
+        self.id = id
+        self.classification = classification
+        self.name = name
+        self.floor = floor
+        self.ceiling = ceiling
+        self.geometry = geometry
+    }
+}
+
+// MARK: - TFR (Temporary Flight Restriction)
+
+struct TFR: Identifiable, Codable, Equatable, Sendable {
+    let id: String                       // NOTAM number (e.g., "FDC 4/0254")
+    let type: TFRType
+    let description: String              // Human-readable TFR description
+    let effectiveDate: Date
+    let expirationDate: Date
+    let latitude: Double                 // Center latitude (for circular TFRs)
+    let longitude: Double                // Center longitude
+    let radiusNM: Double?                // Radius in nautical miles (nil for polygon TFRs)
+    let boundaries: [[Double]]           // Array of [lat, lon] pairs (for polygon TFRs)
+    let floorAltitude: Int               // feet MSL
+    let ceilingAltitude: Int             // feet MSL
+
+    /// Whether the TFR is currently active based on effective/expiration dates.
+    nonisolated var isActive: Bool {
+        let now = Date()
+        return now >= effectiveDate && now <= expirationDate
+    }
+
+    /// Center coordinate for map display and distance calculations.
+    nonisolated var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    nonisolated init(
+        id: String,
+        type: TFRType,
+        description: String,
+        effectiveDate: Date,
+        expirationDate: Date,
+        latitude: Double,
+        longitude: Double,
+        radiusNM: Double? = nil,
+        boundaries: [[Double]] = [],
+        floorAltitude: Int = 0,
+        ceilingAltitude: Int = 18000
+    ) {
+        self.id = id
+        self.type = type
+        self.description = description
+        self.effectiveDate = effectiveDate
+        self.expirationDate = expirationDate
+        self.latitude = latitude
+        self.longitude = longitude
+        self.radiusNM = radiusNM
+        self.boundaries = boundaries
+        self.floorAltitude = floorAltitude
+        self.ceilingAltitude = ceilingAltitude
+    }
 }
 
 // MARK: - Flight Plan

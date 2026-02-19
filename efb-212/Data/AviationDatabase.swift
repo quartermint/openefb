@@ -123,6 +123,22 @@ final class AviationDatabase: @unchecked Sendable {
             }
         }
 
+        migrator.registerMigration("v2-airspaces") { db in
+            // ── Airspaces ──
+            try db.create(table: "airspaces") { t in
+                t.primaryKey("id", .text)                                    // UUID string
+                t.column("name", .text).notNull()
+                t.column("classification", .text).notNull()
+                t.column("floorAltitude", .integer).notNull()                // feet MSL
+                t.column("ceilingAltitude", .integer).notNull()              // feet MSL
+                t.column("geometryJSON", .text).notNull()                    // JSON-encoded AirspaceGeometry
+                t.column("minLat", .double).notNull()                        // bounding box for spatial queries
+                t.column("maxLat", .double).notNull()
+                t.column("minLon", .double).notNull()
+                t.column("maxLon", .double).notNull()
+            }
+        }
+
         return migrator
     }
 
@@ -421,14 +437,122 @@ final class AviationDatabase: @unchecked Sendable {
         }
     }
 
+    // MARK: - Airspace Data Import
+
+    /// Insert or replace a single airspace, computing bounding box from geometry.
+    nonisolated func insertAirspace(_ airspace: Airspace) throws {
+        try dbPool.write { db in
+            let geometryData = try JSONEncoder().encode(airspace.geometry)
+            let geometryJSON = String(data: geometryData, encoding: .utf8) ?? "null"
+            let bbox = Self.boundingBox(for: airspace.geometry)
+
+            try db.execute(
+                sql: """
+                    INSERT OR REPLACE INTO airspaces
+                    (id, name, classification, floorAltitude, ceilingAltitude,
+                     geometryJSON, minLat, maxLat, minLon, maxLon)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                arguments: [
+                    airspace.id.uuidString,
+                    airspace.name,
+                    airspace.classification.rawValue,
+                    airspace.floor,
+                    airspace.ceiling,
+                    geometryJSON,
+                    bbox.minLat, bbox.maxLat,
+                    bbox.minLon, bbox.maxLon
+                ]
+            )
+        }
+    }
+
+    /// Bulk insert airspaces in a single transaction for performance.
+    nonisolated func insertAirspaces(_ airspaces: [Airspace]) throws {
+        try dbPool.write { db in
+            for airspace in airspaces {
+                let geometryData = try JSONEncoder().encode(airspace.geometry)
+                let geometryJSON = String(data: geometryData, encoding: .utf8) ?? "null"
+                let bbox = Self.boundingBox(for: airspace.geometry)
+
+                try db.execute(
+                    sql: """
+                        INSERT OR REPLACE INTO airspaces
+                        (id, name, classification, floorAltitude, ceilingAltitude,
+                         geometryJSON, minLat, maxLat, minLon, maxLon)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        airspace.id.uuidString,
+                        airspace.name,
+                        airspace.classification.rawValue,
+                        airspace.floor,
+                        airspace.ceiling,
+                        geometryJSON,
+                        bbox.minLat, bbox.maxLat,
+                        bbox.minLon, bbox.maxLon
+                    ]
+                )
+            }
+        }
+    }
+
+    /// Return the total number of airspaces in the database.
+    nonisolated func airspaceCount() throws -> Int {
+        try dbPool.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM airspaces") ?? 0
+        }
+    }
+
     // MARK: - Airspace Queries
 
+    /// Fetch all airspaces within a bounding box (used for map viewport queries).
+    nonisolated func airspaces(near coordinate: CLLocationCoordinate2D, radiusNM: Double) throws -> [Airspace] {
+        let degreeOffset = radiusNM / 60.0
+        let minLat = coordinate.latitude - degreeOffset
+        let maxLat = coordinate.latitude + degreeOffset
+        let lonOffset = degreeOffset / max(cos(coordinate.latitude * .pi / 180.0), 0.01)
+        let minLon = coordinate.longitude - lonOffset
+        let maxLon = coordinate.longitude + lonOffset
+
+        return try dbPool.read { db in
+            // Bounding-box overlap: airspace bbox overlaps query bbox
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT * FROM airspaces
+                WHERE minLat <= ? AND maxLat >= ?
+                  AND minLon <= ? AND maxLon >= ?
+            """, arguments: [maxLat, minLat, maxLon, minLon])
+
+            return rows.compactMap { self.airspaceFromRow($0) }
+        }
+    }
+
     /// Return airspaces containing a coordinate at a given altitude.
-    /// TODO: Real implementation requires polygon geometry (point-in-polygon tests).
-    /// For now returns an empty array as a stub.
-    nonisolated func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Int) throws -> [Airspace] {
-        // TODO: Implement polygon-based containment check once airspace geometry is imported
-        return []
+    /// Uses bounding-box pre-filter then point-in-polygon for polygons,
+    /// or distance check for circles.
+    nonisolated func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Double) throws -> [Airspace] {
+        return try dbPool.read { db in
+            // Bounding-box pre-filter: the coordinate must be inside the airspace bbox
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT * FROM airspaces
+                WHERE minLat <= ? AND maxLat >= ?
+                  AND minLon <= ? AND maxLon >= ?
+                  AND floorAltitude <= ? AND ceilingAltitude >= ?
+            """, arguments: [
+                coordinate.latitude, coordinate.latitude,
+                coordinate.longitude, coordinate.longitude,
+                Int(altitude), Int(altitude)
+            ])
+
+            return rows.compactMap { row -> Airspace? in
+                guard let airspace = self.airspaceFromRow(row) else { return nil }
+                // Point-in-polygon / distance check
+                if Self.geometryContains(airspace.geometry, coordinate: coordinate) {
+                    return airspace
+                }
+                return nil
+            }
+        }
     }
 
     // MARK: - Weather Station Coordinate Resolution
@@ -589,6 +713,102 @@ final class AviationDatabase: @unchecked Sendable {
             runways: runways,
             frequencies: frequencies
         )
+    }
+
+    private nonisolated func airspaceFromRow(_ row: Row) -> Airspace? {
+        let idString: String = row["id"]
+        let geometryJSON: String = row["geometryJSON"]
+
+        guard let geometryData = geometryJSON.data(using: .utf8),
+              let geometry = try? JSONDecoder().decode(AirspaceGeometry.self, from: geometryData) else {
+            return nil
+        }
+
+        return Airspace(
+            id: UUID(uuidString: idString) ?? UUID(),
+            classification: AirspaceClass(rawValue: row["classification"]) ?? .echo,
+            name: row["name"],
+            floor: row["floorAltitude"],
+            ceiling: row["ceilingAltitude"],
+            geometry: geometry
+        )
+    }
+
+    // MARK: - Airspace Geometry Helpers
+
+    /// Compute bounding box from airspace geometry for spatial indexing.
+    private nonisolated static func boundingBox(for geometry: AirspaceGeometry) -> (minLat: Double, maxLat: Double, minLon: Double, maxLon: Double) {
+        switch geometry {
+        case .polygon(let coordinates):
+            guard !coordinates.isEmpty else {
+                return (0, 0, 0, 0)
+            }
+            var minLat = Double.greatestFiniteMagnitude
+            var maxLat = -Double.greatestFiniteMagnitude
+            var minLon = Double.greatestFiniteMagnitude
+            var maxLon = -Double.greatestFiniteMagnitude
+            for pair in coordinates {
+                guard pair.count >= 2 else { continue }
+                let lat = pair[0]
+                let lon = pair[1]
+                minLat = min(minLat, lat)
+                maxLat = max(maxLat, lat)
+                minLon = min(minLon, lon)
+                maxLon = max(maxLon, lon)
+            }
+            return (minLat, maxLat, minLon, maxLon)
+
+        case .circle(let center, let radiusNM):
+            guard center.count >= 2 else { return (0, 0, 0, 0) }
+            let lat = center[0]
+            let lon = center[1]
+            let degOffset = radiusNM / 60.0
+            let lonOffset = degOffset / max(cos(lat * .pi / 180.0), 0.01)
+            return (lat - degOffset, lat + degOffset, lon - lonOffset, lon + lonOffset)
+        }
+    }
+
+    /// Check whether a coordinate is inside an airspace geometry.
+    /// Uses ray-casting for polygons, distance for circles.
+    private nonisolated static func geometryContains(_ geometry: AirspaceGeometry, coordinate: CLLocationCoordinate2D) -> Bool {
+        switch geometry {
+        case .polygon(let coordinates):
+            return pointInPolygon(
+                lat: coordinate.latitude,
+                lon: coordinate.longitude,
+                polygon: coordinates
+            )
+        case .circle(let center, let radiusNM):
+            guard center.count >= 2 else { return false }
+            let centerLoc = CLLocation(latitude: center[0], longitude: center[1])
+            let pointLoc = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            let distanceNM = centerLoc.distance(from: pointLoc) / 1852.0  // meters to NM
+            return distanceNM <= radiusNM
+        }
+    }
+
+    /// Ray-casting point-in-polygon test.
+    /// polygon is an array of [lat, lon] pairs.
+    private nonisolated static func pointInPolygon(lat: Double, lon: Double, polygon: [[Double]]) -> Bool {
+        guard polygon.count >= 3 else { return false }
+        var inside = false
+        var j = polygon.count - 1
+
+        for i in 0..<polygon.count {
+            guard polygon[i].count >= 2, polygon[j].count >= 2 else {
+                j = i
+                continue
+            }
+            let yi = polygon[i][0], xi = polygon[i][1]
+            let yj = polygon[j][0], xj = polygon[j][1]
+
+            if ((yi > lat) != (yj > lat)) &&
+               (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) {
+                inside = !inside
+            }
+            j = i
+        }
+        return inside
     }
 
     private nonisolated func weatherCacheFromRow(_ row: Row) -> WeatherCache {

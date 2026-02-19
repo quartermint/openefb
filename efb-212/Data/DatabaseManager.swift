@@ -60,8 +60,13 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
     }
 
     nonisolated func airspaces(containing coordinate: CLLocationCoordinate2D, altitude: Double) async throws -> [Airspace] {
-        // Airspace queries not yet implemented — requires geometry processing
-        return []
+        guard let db = aviationDB else { return [] }
+        return try db.airspaces(containing: coordinate, altitude: altitude)
+    }
+
+    nonisolated func airspaces(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [Airspace] {
+        guard let db = aviationDB else { return [] }
+        return try db.airspaces(near: coordinate, radiusNM: radiusNM)
     }
 
     nonisolated func nearestAirports(to coordinate: CLLocationCoordinate2D, count: Int) async throws -> [Airport] {
@@ -114,7 +119,7 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
 
     nonisolated private static let seedDataLoadedKey = "com.efb212.seedDataLoaded"
     nonisolated private static let seedDataVersionKey = "com.efb212.seedDataVersion"
-    nonisolated private static let currentSeedVersion = 2
+    nonisolated private static let currentSeedVersion = 3
 
     /// Whether seed data has already been loaded into the database.
     nonisolated var isSeedDataLoaded: Bool {
@@ -135,11 +140,15 @@ final class DatabaseManager: DatabaseManagerProtocol, @unchecked Sendable {
         let navaids = NavaidSeedData.allNavaids()
         try db.insertNavaids(navaids)
 
+        let airspaces = AirspaceSeedData.allAirspaces()
+        try db.insertAirspaces(airspaces)
+
         UserDefaults.standard.set(true, forKey: Self.seedDataLoadedKey)
         UserDefaults.standard.set(Self.currentSeedVersion, forKey: Self.seedDataVersionKey)
 
         let count = try db.airportCount()
-        print("Loaded \(count) airports and \(navaids.count) navaids from seed data (version \(Self.currentSeedVersion))")
+        let airspaceCount = try db.airspaceCount()
+        print("Loaded \(count) airports, \(navaids.count) navaids, and \(airspaceCount) airspaces from seed data (version \(Self.currentSeedVersion))")
     }
 
     /// Load seed data if it has not yet been loaded. Safe to call on every launch.
