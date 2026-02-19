@@ -24,6 +24,7 @@ final class AppState: ObservableObject {
     @Published var mapZoom: Double = 10.0
     @Published var mapMode: MapMode = .northUp
     @Published var visibleLayers: Set<MapLayer> = [.sectional, .airports, .ownship]
+    @Published var sectionalOpacity: Double = 0.85
 
     // MARK: - Location / Ownship
 

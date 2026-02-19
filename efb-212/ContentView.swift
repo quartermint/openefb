@@ -19,6 +19,8 @@ struct ContentView: View {
     // Map dependencies — created once for the map tab
     @State private var mapService = MapService()
     @State private var mapViewModel: MapViewModel?
+    @State private var chartManager = ChartManager()
+    @State private var tfrService = TFRService()
 
     // Flight planning
     @State private var flightPlanViewModel: FlightPlanViewModel?
@@ -64,6 +66,7 @@ struct ContentView: View {
                     mapService: mapService,
                     locationManager: appState.locationManager,
                     weatherService: appState.weatherService,
+                    tfrService: tfrService,
                     appState: appState
                 )
             }
@@ -175,6 +178,12 @@ struct ContentView: View {
             InstrumentStripView()
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
+        }
+        .task {
+            await mapService.loadDownloadedSectionals(from: chartManager)
+        }
+        .onChange(of: appState.sectionalOpacity) { _, newOpacity in
+            mapService.setSectionalOpacity(newOpacity)
         }
     }
 

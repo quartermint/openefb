@@ -75,6 +75,7 @@ final class MapViewModel: ObservableObject {
         setupMapServiceDelegate()
         subscribeToLocationUpdates()
         loadInitialAirports()
+        subscribeToLayerChanges()
     }
 
     // MARK: - Setup
@@ -97,6 +98,23 @@ final class MapViewModel: ObservableObject {
                     location: location,
                     heading: locationManager.heading
                 )
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Subscribe to layer visibility changes to reload map data when toggled.
+    private func subscribeToLayerChanges() {
+        guard let appState else { return }
+        appState.$visibleLayers
+            .removeDuplicates()
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                let center = self.mapService.currentCenter
+                let radiusNM = self.estimatedRadiusNM(for: self.mapService.currentZoom)
+                Task { [weak self] in
+                    await self?.loadAirportsForRegion(center: center, radiusNM: radiusNM)
+                }
             }
             .store(in: &cancellables)
     }
@@ -269,6 +287,8 @@ final class MapViewModel: ObservableObject {
     /// - Parameter airport: The airport to select.
     func selectAirport(_ airport: Airport) {
         selectedAirport = airport
+        appState?.selectedAirportID = airport.icao
+        appState?.isPresentingAirportInfo = true
     }
 
     /// Select an airport by ICAO identifier — performs database lookup.
@@ -277,6 +297,8 @@ final class MapViewModel: ObservableObject {
         do {
             if let airport = try await databaseManager.airport(byICAO: icao) {
                 selectedAirport = airport
+                appState?.selectedAirportID = airport.icao
+                appState?.isPresentingAirportInfo = true
             } else {
                 lastError = .airportNotFound(icao)
             }

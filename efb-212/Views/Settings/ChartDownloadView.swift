@@ -11,6 +11,7 @@
 import SwiftUI
 
 struct ChartDownloadView: View {
+    @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = SettingsViewModel()
 
     var body: some View {
@@ -73,8 +74,12 @@ struct ChartDownloadView: View {
             await viewModel.updateStorageInfo()
         }
         .task {
+            viewModel.sectionalOpacity = appState.sectionalOpacity
             viewModel.loadAvailableRegions()
             await viewModel.updateStorageInfo()
+        }
+        .onChange(of: viewModel.sectionalOpacity) { _, newOpacity in
+            appState.sectionalOpacity = newOpacity
         }
     }
 }

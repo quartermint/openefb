@@ -52,10 +52,24 @@ struct MapViewModelTests {
         return db
     }
 
-    static func makeViewModel(db: MockDatabaseManager? = nil) -> MapViewModel {
+    static func makeViewModel(db: MockDatabaseManager? = nil, appState: AppState? = nil) -> MapViewModel {
         let database = db ?? makeMockDB()
         let mapService = MapService()
-        return MapViewModel(databaseManager: database, mapService: mapService)
+        return MapViewModel(
+            databaseManager: database,
+            mapService: mapService,
+            weatherService: MockWeatherService(),
+            tfrService: MockTFRService(),
+            appState: appState
+        )
+    }
+
+    static func makeAppState() -> AppState {
+        AppState(
+            locationManager: MockLocationManager(),
+            databaseManager: MockDatabaseManager(),
+            weatherService: MockWeatherService()
+        )
     }
 
     // MARK: - Airport Loading
@@ -195,5 +209,48 @@ struct MapViewModelTests {
         // lastError should not be set unless an error occurs
         // (initial load with mock data should succeed)
         // Give a small window for the initial load task
+    }
+
+    // MARK: - AppState Integration
+
+    @Test func selectAirportSetsAppState() {
+        let appState = Self.makeAppState()
+        let vm = Self.makeViewModel(appState: appState)
+
+        #expect(appState.isPresentingAirportInfo == false)
+        #expect(appState.selectedAirportID == nil)
+
+        vm.selectAirport(Self.kpao)
+
+        #expect(appState.isPresentingAirportInfo == true)
+        #expect(appState.selectedAirportID == "KPAO")
+    }
+
+    @Test func selectAirportByICAOSetsAppState() async {
+        let db = Self.makeMockDB()
+        let appState = Self.makeAppState()
+        let vm = Self.makeViewModel(db: db, appState: appState)
+
+        await vm.selectAirport(byICAO: "KSQL")
+
+        #expect(vm.selectedAirport?.icao == "KSQL")
+        #expect(appState.isPresentingAirportInfo == true)
+        #expect(appState.selectedAirportID == "KSQL")
+    }
+
+    @Test func clearSelectionDoesNotAffectAppState() {
+        let appState = Self.makeAppState()
+        let vm = Self.makeViewModel(appState: appState)
+
+        vm.selectAirport(Self.kpao)
+        #expect(appState.isPresentingAirportInfo == true)
+        #expect(appState.selectedAirportID == "KPAO")
+
+        vm.clearSelection()
+
+        #expect(vm.selectedAirport == nil)
+        // AppState should remain unchanged — sheet dismissal is handled by the sheet binding
+        #expect(appState.isPresentingAirportInfo == true)
+        #expect(appState.selectedAirportID == "KPAO")
     }
 }
