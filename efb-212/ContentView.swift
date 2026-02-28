@@ -31,6 +31,9 @@ struct ContentView: View {
     @State private var nearestAirportViewModel: NearestAirportViewModel?
     @State private var showNearestAirport: Bool = false
 
+    // Chart state
+    @State private var hasDownloadedCharts: Bool = false
+
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
@@ -91,7 +94,7 @@ struct ContentView: View {
             if let airportID = appState.selectedAirportID,
                let airport = mapViewModel?.selectedAirport, airport.icao == airportID {
                 let weather = weatherViewModel?.weatherData[airportID]
-                AirportInfoSheet(airport: airport, weather: weather)
+                AirportInfoSheet(airport: airport, weather: weather, weatherViewModel: weatherViewModel)
             }
         }
         .sheet(isPresented: $showFlightPlan) {
@@ -130,7 +133,22 @@ struct ContentView: View {
                 .ignoresSafeArea(edges: .top)
 
             // Floating controls
-            VStack {
+            VStack(spacing: 0) {
+                // TFR sample data disclaimer — safety-critical, non-dismissable
+                if appState.visibleLayers.contains(.tfrs) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                        Text("TFR DATA IS SAMPLE ONLY — NOT FOR NAVIGATION")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(.red)
+                }
+
                 HStack {
                     // Flight plan button (top-left)
                     Button {
@@ -143,7 +161,7 @@ struct ContentView: View {
                             .clipShape(Circle())
                     }
                     .padding(.leading, 16)
-                    .padding(.top, 60)
+                    .padding(.top, appState.visibleLayers.contains(.tfrs) ? 8 : 60)
 
                     // Nearest airport button — emergency/safety feature
                     Button {
@@ -162,20 +180,42 @@ struct ContentView: View {
                         .background(.red)
                         .clipShape(Capsule())
                     }
-                    .padding(.top, 60)
+                    .padding(.top, appState.visibleLayers.contains(.tfrs) ? 8 : 60)
 
                     Spacer()
 
                     // Layer controls (top-right)
                     LayerControlsView(mapService: mapService)
                         .padding(.trailing, 16)
-                        .padding(.top, 60)
+                        .padding(.top, appState.visibleLayers.contains(.tfrs) ? 8 : 60)
                 }
                 Spacer()
             }
 
             // Nearest airport indicator + Instrument strip at bottom
             VStack(spacing: 6) {
+                // "No charts downloaded" indicator
+                if appState.visibleLayers.contains(.sectional) && !hasDownloadedCharts {
+                    Button {
+                        selectedTab = .settings
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "map")
+                                .font(.caption)
+                            Text("No VFR charts downloaded")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.orange)
+                        .clipShape(Capsule())
+                    }
+                }
+
                 // Nearest airport HUD
                 if let nearest = mapViewModel?.nearestAirport {
                     NearestAirportHUD(
@@ -191,6 +231,8 @@ struct ContentView: View {
         }
         .task {
             await mapService.loadDownloadedSectionals(from: chartManager)
+            let paths = await chartManager.downloadedChartPaths()
+            hasDownloadedCharts = !paths.isEmpty
         }
         .onChange(of: appState.sectionalOpacity) { _, newOpacity in
             mapService.setSectionalOpacity(newOpacity)

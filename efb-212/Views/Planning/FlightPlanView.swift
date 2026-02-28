@@ -9,15 +9,53 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct FlightPlanView: View {
 
     @ObservedObject var viewModel: FlightPlanViewModel
     @ObservedObject var weatherViewModel: WeatherViewModel
+    @Query(sort: \AircraftProfileModel.nNumber) private var aircraftProfiles: [AircraftProfileModel]
 
     var body: some View {
         NavigationStack {
             Form {
+                // MARK: - Aircraft Selection
+                Section {
+                    if aircraftProfiles.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "info.circle")
+                                .foregroundStyle(.secondary)
+                            Text("No aircraft profiles — using 100 kts default")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Picker("Aircraft", selection: Binding(
+                            get: { viewModel.selectedAircraftName ?? "" },
+                            set: { newValue in
+                                if newValue.isEmpty {
+                                    viewModel.clearAircraftProfile()
+                                } else if let profile = aircraftProfiles.first(where: { aircraftDisplayName($0) == newValue }) {
+                                    viewModel.configureFromAircraftProfile(
+                                        name: aircraftDisplayName(profile),
+                                        cruiseSpeed: profile.cruiseSpeedKts,
+                                        fuelBurn: profile.fuelBurnGPH,
+                                        fuelCapacity: profile.fuelCapacityGallons
+                                    )
+                                }
+                            }
+                        )) {
+                            Text("None (100 kts default)").tag("")
+                            ForEach(aircraftProfiles, id: \.nNumber) { profile in
+                                Text(aircraftDisplayName(profile)).tag(aircraftDisplayName(profile))
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Aircraft")
+                }
+
                 // MARK: - Route Entry
                 Section("Route") {
                     HStack {
@@ -112,6 +150,29 @@ struct FlightPlanView: View {
                             detailRow(label: "Cruise Speed", value: speed)
                         }
                     }
+
+                    // Fuel insufficiency warning
+                    if viewModel.fuelInsufficient {
+                        Section {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.white)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("INSUFFICIENT FUEL")
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                    if let fuel = viewModel.activePlan?.estimatedFuel,
+                                       let capacity = viewModel.fuelCapacity {
+                                        Text(String(format: "Requires %.1f gal — capacity %.1f gal", fuel, capacity))
+                                            .font(.caption)
+                                            .foregroundStyle(.white.opacity(0.9))
+                                    }
+                                }
+                            }
+                            .listRowBackground(Color.red)
+                        }
+                    }
                 }
             }
             .navigationTitle("Flight Plan")
@@ -192,6 +253,14 @@ struct FlightPlanView: View {
     }
 
     // MARK: - Helpers
+
+    /// Display name for an aircraft profile (e.g., "N4543A — AA-5B Tiger").
+    private func aircraftDisplayName(_ profile: AircraftProfileModel) -> String {
+        if let type = profile.aircraftType, !type.isEmpty {
+            return "\(profile.nNumber) — \(type)"
+        }
+        return profile.nNumber
+    }
 
     /// Fetch weather for departure and destination airports.
     private func fetchRouteWeather() async {
