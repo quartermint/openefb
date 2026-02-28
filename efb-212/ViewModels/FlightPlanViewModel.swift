@@ -36,16 +36,33 @@ final class FlightPlanViewModel: ObservableObject {
     /// Last error encountered.
     @Published var error: EFBError?
 
-    // MARK: - Configuration
+    // MARK: - Aircraft Configuration
 
-    /// Default cruise speed — knots TAS.
-    private let defaultCruiseSpeed: Double = 100.0
+    /// Cruise speed used for ETE calculations — knots TAS.
+    /// Defaults to 100 kts when no aircraft profile is selected.
+    @Published var cruiseSpeed: Double = 100.0
+
+    /// Fuel burn rate — gallons per hour. Nil when no aircraft profile is configured.
+    @Published var fuelBurnRate: Double?
+
+    /// Fuel capacity — gallons. Nil when no aircraft profile is configured.
+    @Published var fuelCapacity: Double?
+
+    /// Display name of the selected aircraft, if any.
+    @Published var selectedAircraftName: String?
 
     /// Default cruise altitude — feet MSL.
     private let defaultCruiseAltitude: Int = 3000
 
-    /// Default fuel burn rate — gallons per hour (nil if unknown).
-    private let defaultFuelBurnRate: Double? = nil
+    /// Whether an aircraft profile is providing performance data.
+    var hasAircraftProfile: Bool { selectedAircraftName != nil }
+
+    /// Whether estimated fuel exceeds aircraft fuel capacity.
+    var fuelInsufficient: Bool {
+        guard let fuel = activePlan?.estimatedFuel,
+              let capacity = fuelCapacity else { return false }
+        return fuel > capacity
+    }
 
     // MARK: - Dependencies
 
@@ -55,6 +72,36 @@ final class FlightPlanViewModel: ObservableObject {
 
     init(databaseManager: any DatabaseManagerProtocol) {
         self.databaseManager = databaseManager
+    }
+
+    // MARK: - Aircraft Configuration
+
+    /// Configure flight plan calculations from an aircraft profile.
+    /// - Parameters:
+    ///   - name: Aircraft display name (e.g., "N4543A - AA-5B Tiger").
+    ///   - cruiseSpeed: Cruise speed in knots TAS. Nil keeps the current value.
+    ///   - fuelBurn: Fuel burn rate in GPH. Nil clears fuel estimates.
+    ///   - fuelCapacity: Fuel capacity in gallons. Nil clears fuel sufficiency check.
+    func configureFromAircraftProfile(
+        name: String,
+        cruiseSpeed: Double?,
+        fuelBurn: Double?,
+        fuelCapacity: Double?
+    ) {
+        self.selectedAircraftName = name
+        if let speed = cruiseSpeed, speed > 0 {
+            self.cruiseSpeed = speed
+        }
+        self.fuelBurnRate = fuelBurn
+        self.fuelCapacity = fuelCapacity
+    }
+
+    /// Clear aircraft profile, reverting to defaults.
+    func clearAircraftProfile() {
+        selectedAircraftName = nil
+        cruiseSpeed = 100.0
+        fuelBurnRate = nil
+        fuelCapacity = nil
     }
 
     // MARK: - Flight Plan Creation
@@ -97,12 +144,12 @@ final class FlightPlanViewModel: ObservableObject {
             let distanceNM = distanceMeters.metersToNM  // Uses CLLocation+Aviation extension
 
             // Calculate ETE from cruise speed
-            let cruiseSpeed = defaultCruiseSpeed  // knots TAS
-            let eteSeconds: TimeInterval = distanceNM > 0 ? (distanceNM / cruiseSpeed) * 3600 : 0
+            let speed = cruiseSpeed  // knots TAS (from aircraft profile or default 100)
+            let eteSeconds: TimeInterval = distanceNM > 0 ? (distanceNM / speed) * 3600 : 0
 
             // Calculate fuel if burn rate is available
             let estimatedFuel: Double? = {
-                guard let burnRate = defaultFuelBurnRate else { return nil }
+                guard let burnRate = fuelBurnRate else { return nil }
                 let hours = eteSeconds / 3600.0
                 return burnRate * hours  // gallons
             }()
@@ -133,8 +180,8 @@ final class FlightPlanViewModel: ObservableObject {
                 destination: destID,
                 waypoints: [departureWaypoint, destinationWaypoint],
                 cruiseAltitude: defaultCruiseAltitude,
-                cruiseSpeed: cruiseSpeed,
-                fuelBurnRate: defaultFuelBurnRate,
+                cruiseSpeed: speed,
+                fuelBurnRate: fuelBurnRate,
                 totalDistance: distanceNM,
                 estimatedTime: eteSeconds,
                 estimatedFuel: estimatedFuel

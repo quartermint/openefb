@@ -95,12 +95,21 @@ private struct LayerTogglePanel: View {
                 .padding(.bottom, 4)
 
             ForEach(MapLayer.allCases, id: \.self) { layer in
-                Toggle(isOn: layerBinding(for: layer)) {
-                    Label(layer.displayName, systemImage: layer.systemImage)
-                        .font(.subheadline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Toggle(isOn: layerBinding(for: layer)) {
+                        Label(layer.displayName, systemImage: layer.systemImage)
+                            .font(.subheadline)
+                    }
+                    .toggleStyle(.switch)
+                    .tint(layer.tintColor)
+
+                    if layer == .tfrs {
+                        Text("Sample data only")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                            .padding(.leading, 4)
+                    }
                 }
-                .toggleStyle(.switch)
-                .tint(layer.tintColor)
             }
         }
         .padding()

@@ -21,6 +21,7 @@ struct SettingsView: View {
 
     @State private var showingClearCacheAlert = false
     @State private var cacheCleared = false
+    @State private var isSyncingFromAppState = false
 
     var body: some View {
         List {
@@ -90,12 +91,18 @@ struct SettingsView: View {
         .onChange(of: showTFRs) { _, _ in syncLayersToAppState() }
         .onChange(of: showWeatherDots) { _, _ in syncLayersToAppState() }
         .onChange(of: showNavaids) { _, _ in syncLayersToAppState() }
+        .onChange(of: appState.visibleLayers) { _, _ in
+            // Sync from AppState when layers change externally (e.g., map layer popover on iPad split view)
+            syncMapLayerToggles()
+        }
     }
 
     // MARK: - Map Layer Sync
 
     /// Reads current AppState visible layers into local toggle state.
     private func syncMapLayerToggles() {
+        isSyncingFromAppState = true
+        defer { isSyncingFromAppState = false }
         defaultMapMode = appState.mapMode
         showSectional = appState.visibleLayers.contains(.sectional)
         showAirports = appState.visibleLayers.contains(.airports)
@@ -107,6 +114,7 @@ struct SettingsView: View {
 
     /// Writes local toggle state back to AppState visible layers.
     private func syncLayersToAppState() {
+        guard !isSyncingFromAppState else { return }
         var layers: Set<MapLayer> = [.ownship, .route] // Always show ownship and route
         if showSectional { layers.insert(.sectional) }
         if showAirports { layers.insert(.airports) }

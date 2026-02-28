@@ -10,8 +10,25 @@ import SwiftUI
 
 struct AirportInfoSheet: View {
     let airport: Airport
-    let weather: WeatherCache?
+    let initialWeather: WeatherCache?
+    var weatherViewModel: WeatherViewModel?
     @Environment(\.dismiss) private var dismiss
+    @State private var isLoadingWeather: Bool = false
+
+    /// Resolved weather — either passed in or fetched on-demand.
+    private var weather: WeatherCache? {
+        // Prefer fresh data from the view model if available
+        if let vm = weatherViewModel, let fetched = vm.weatherData[airport.icao] {
+            return fetched
+        }
+        return initialWeather
+    }
+
+    init(airport: Airport, weather: WeatherCache?, weatherViewModel: WeatherViewModel? = nil) {
+        self.airport = airport
+        self.initialWeather = weather
+        self.weatherViewModel = weatherViewModel
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -101,6 +118,18 @@ struct AirportInfoSheet: View {
                 VStack(alignment: .leading, spacing: 12) {
                     if let weather {
                         WeatherBlock(weather: weather)
+                    } else if isLoadingWeather {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Loading weather...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Text("No weather available")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
 
                     // Mag var
@@ -125,6 +154,14 @@ struct AirportInfoSheet: View {
         .presentationDetents([.medium])
         .presentationDragIndicator(.hidden)
         .presentationBackground(.regularMaterial)
+        .task {
+            // Fetch weather on-demand if not already cached
+            if weather == nil, let vm = weatherViewModel {
+                isLoadingWeather = true
+                await vm.fetchWeather(for: airport.icao)
+                isLoadingWeather = false
+            }
+        }
     }
 
     private func flightCategoryColor(_ category: FlightCategory) -> Color {
