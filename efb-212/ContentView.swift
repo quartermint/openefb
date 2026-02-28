@@ -174,10 +174,20 @@ struct ContentView: View {
                 Spacer()
             }
 
-            // Instrument strip at bottom
-            InstrumentStripView()
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+            // Nearest airport indicator + Instrument strip at bottom
+            VStack(spacing: 6) {
+                // Nearest airport HUD
+                if let nearest = mapViewModel?.nearestAirport {
+                    NearestAirportHUD(
+                        airport: nearest,
+                        ownshipPosition: appState.ownshipPosition
+                    )
+                }
+
+                InstrumentStripView()
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
         }
         .task {
             await mapService.loadDownloadedSectionals(from: chartManager)

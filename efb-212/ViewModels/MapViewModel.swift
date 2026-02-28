@@ -27,6 +27,9 @@ final class MapViewModel: ObservableObject {
     /// Active TFRs currently displayed on the map.
     @Published var visibleTFRs: [TFR] = []
 
+    /// Nearest airport to ownship position.
+    @Published var nearestAirport: Airport?
+
     /// Currently selected airport (tapped on map).
     @Published var selectedAirport: Airport?
 
@@ -147,6 +150,7 @@ final class MapViewModel: ObservableObject {
             let airports = try await databaseManager.airports(near: center, radiusNM: clampedRadius)
             visibleAirports = airports
             mapService.addAirportAnnotations(airports)
+            updateNearestAirport(from: airports)
 
             // Load and display navaids if the layer is active
             await loadNavaidsForRegion(center: center, radiusNM: clampedRadius)
@@ -271,6 +275,23 @@ final class MapViewModel: ObservableObject {
             visibleTFRs = []
             mapService.removeTFROverlays()
         }
+    }
+
+    // MARK: - Nearest Airport
+
+    /// Update the nearest airport based on the ownship position or map center.
+    /// - Parameter airports: The currently visible airports to search.
+    private func updateNearestAirport(from airports: [Airport]) {
+        let reference: CLLocationCoordinate2D
+        if let position = appState?.ownshipPosition?.coordinate {
+            reference = position
+        } else {
+            reference = mapService.currentCenter
+        }
+
+        nearestAirport = airports.min(by: { a, b in
+            reference.distanceInNM(to: a.coordinate) < reference.distanceInNM(to: b.coordinate)
+        })
     }
 
     // MARK: - User Location

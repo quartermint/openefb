@@ -60,8 +60,8 @@ final class MapService: NSObject, ObservableObject {
         self.mapView = mapView
         mapView.delegate = self
 
-        // Use MapLibre demo tiles as base style (replaced with aviation tiles in production)
-        mapView.styleURL = URL(string: "https://demotiles.maplibre.org/style.json")
+        // OpenFreeMap — free, no API key, full road/terrain detail
+        mapView.styleURL = URL(string: "https://tiles.openfreemap.org/styles/liberty")
 
         // Defer user location tracking until permissions are granted.
         // Setting showsUserLocation without proper Info.plist keys can crash.
