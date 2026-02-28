@@ -46,6 +46,7 @@ struct LayerControlsView: View {
                 .accessibilityLabel("Zoom in")
 
                 Divider()
+                    .frame(width: 44)
 
                 Button {
                     mapService.zoomOut()
@@ -56,6 +57,7 @@ struct LayerControlsView: View {
                 }
                 .accessibilityLabel("Zoom out")
             }
+            .frame(width: 44)
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 10))
 
