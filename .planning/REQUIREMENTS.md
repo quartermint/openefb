@@ -113,51 +113,51 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | - | Pending |
-| NAV-02 | - | Pending |
-| NAV-03 | - | Pending |
-| NAV-04 | - | Pending |
-| NAV-05 | - | Pending |
-| NAV-06 | - | Pending |
-| NAV-07 | - | Pending |
-| DATA-01 | - | Pending |
-| DATA-02 | - | Pending |
-| DATA-03 | - | Pending |
-| DATA-04 | - | Pending |
-| DATA-05 | - | Pending |
-| DATA-06 | - | Pending |
-| WX-01 | - | Pending |
-| WX-02 | - | Pending |
-| WX-03 | - | Pending |
-| PLAN-01 | - | Pending |
-| PLAN-02 | - | Pending |
-| PLAN-03 | - | Pending |
-| PLAN-04 | - | Pending |
-| REC-01 | - | Pending |
-| REC-02 | - | Pending |
-| REC-03 | - | Pending |
-| REC-04 | - | Pending |
-| REC-05 | - | Pending |
-| DEBRIEF-01 | - | Pending |
-| DEBRIEF-02 | - | Pending |
-| DEBRIEF-03 | - | Pending |
-| LOG-01 | - | Pending |
-| LOG-02 | - | Pending |
-| LOG-03 | - | Pending |
-| LOG-04 | - | Pending |
-| REPLAY-01 | - | Pending |
-| REPLAY-02 | - | Pending |
-| INFRA-01 | - | Pending |
-| INFRA-02 | - | Pending |
-| INFRA-03 | - | Pending |
-| INFRA-04 | - | Pending |
-| INFRA-05 | - | Pending |
+| NAV-01 | Phase 1 | Pending |
+| NAV-02 | Phase 1 | Pending |
+| NAV-03 | Phase 1 | Pending |
+| NAV-04 | Phase 1 | Pending |
+| NAV-05 | Phase 1 | Pending |
+| NAV-06 | Phase 1 | Pending |
+| NAV-07 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+| WX-01 | Phase 1 | Pending |
+| WX-02 | Phase 1 | Pending |
+| WX-03 | Phase 1 | Pending |
+| PLAN-01 | Phase 2 | Pending |
+| PLAN-02 | Phase 2 | Pending |
+| PLAN-03 | Phase 2 | Pending |
+| PLAN-04 | Phase 2 | Pending |
+| REC-01 | Phase 3 | Pending |
+| REC-02 | Phase 3 | Pending |
+| REC-03 | Phase 3 | Pending |
+| REC-04 | Phase 3 | Pending |
+| REC-05 | Phase 3 | Pending |
+| DEBRIEF-01 | Phase 4 | Pending |
+| DEBRIEF-02 | Phase 4 | Pending |
+| DEBRIEF-03 | Phase 4 | Pending |
+| LOG-01 | Phase 4 | Pending |
+| LOG-02 | Phase 4 | Pending |
+| LOG-03 | Phase 4 | Pending |
+| LOG-04 | Phase 4 | Pending |
+| REPLAY-01 | Phase 5 | Pending |
+| REPLAY-02 | Phase 5 | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 6 | Pending |
+| INFRA-05 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39
+- Mapped to phases: 39
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 — traceability filled after roadmap creation*
