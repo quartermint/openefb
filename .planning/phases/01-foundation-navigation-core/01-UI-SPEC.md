@@ -29,23 +29,19 @@ created: 2026-03-20
 
 ## Spacing Scale
 
-Declared values in points (must be multiples of 4):
+Declared values in points (all multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| xs | 2pt | VStack spacing inside InstrumentCell (label-to-value gap) |
-| sm | 4pt | Icon-to-text gaps within HStacks, divider horizontal padding |
-| md | 8pt | Compact element spacing, badge internal padding vertical, bottom padding for instrument strip |
-| lg | 12pt | Section spacing within sheets, controls VStack spacing, corner radii |
-| xl | 16pt | Default horizontal padding for floating controls, map edge insets |
-| 2xl | 20pt | Airport info sheet horizontal padding |
-| 3xl | 44pt | Minimum touch target size for all interactive map controls |
+| xs | 4pt | Icon-to-text gaps within HStacks, divider horizontal padding, VStack spacing inside InstrumentCell (label-to-value gap), vertical padding on badges/chips (capsule form factor) |
+| sm | 8pt | Compact element spacing, badge internal padding vertical, bottom padding for instrument strip, internal padding on search bar and floating buttons, corner radii for small components |
+| md | 16pt | Default horizontal padding for floating controls, map edge insets, section spacing within sheets, controls VStack spacing, corner radii for panels |
+| lg | 24pt | Airport info sheet horizontal padding, generous section margins |
+| xl | 44pt | Minimum touch target size for all interactive map controls, height for zoom +/- buttons |
 
 Exceptions:
 - 44pt minimum touch target on all map control buttons (Apple HIG mandate for iPad)
-- 10pt internal padding on search bar and floating buttons (compact for always-visible controls)
-- 6pt vertical padding on badges/chips (capsule form factor, tighter than standard)
-- 40pt height for zoom +/- buttons within the combined zoom control
+- 40pt height for zoom +/- buttons within the combined zoom control (4pt less than standalone touch targets because they share a continuous material background)
 
 ---
 
@@ -55,21 +51,15 @@ All typography uses SwiftUI Dynamic Type text styles with the system font (San F
 
 | Role | SwiftUI Style | Design Variant | Weight | Usage |
 |------|---------------|----------------|--------|-------|
-| Display | `.largeTitle` | `.rounded` | `.bold` | Airport ICAO identifier in info sheet header |
-| Heading | `.title3` | default | `.regular` | Airport name in info sheet, section headings |
-| Heading (alt) | `.headline` | default | default | Flight category label, layer panel title |
-| Body | `.subheadline` | default | `.medium` | Frequency values, weather data values, runway dimensions |
-| Body (data) | `.subheadline` | `.monospaced` | `.medium` | Numeric data that must align (frequencies, wind direction, runway IDs) |
-| Instrument value | `.title3` | `.monospaced` | `.semibold` | Instrument strip numeric readouts (GS, ALT, VS, TRK, DTG, ETE) |
-| Label | `.caption` | default | `.medium` | Info chip labels, search placeholder, HUD distance/bearing |
-| Label (data) | `.caption` | `.monospaced` | `.bold` | Nearest airport ICAO in HUD |
-| Micro | `.caption2` | default | `.medium` / `.bold` | Instrument labels (GS, ALT, VS, TRK), section titles (RUNWAYS, FREQUENCIES, WEATHER), staleness badge text, unit labels |
-| Raw data | `.caption2` | `.monospaced` | default | Raw METAR string |
+| Display | `.largeTitle` | `.rounded` | `.semibold` | Airport ICAO identifier in info sheet header |
+| Heading | `.title3` | default / `.monospaced` | `.semibold` | Airport name in info sheet, section headings, flight category label, layer panel title; `.monospaced` variant for instrument strip numeric readouts (GS, ALT, VS, TRK, DTG, ETE) |
+| Body | `.subheadline` | default / `.monospaced` | `.medium` | Frequency values, weather data values, runway dimensions, info chip labels, search placeholder, HUD distance/bearing; `.monospaced` variant for numeric data that must align (frequencies, wind direction, runway IDs) |
+| Micro | `.caption2` | default / `.monospaced` | `.medium` / `.semibold` | Instrument labels (GS, ALT, VS, TRK), section titles (RUNWAYS, FREQUENCIES, WEATHER), staleness badge text, unit labels, nearest airport ICAO in HUD (`.monospaced` + `.semibold`); raw METAR string (`.monospaced` + `.medium`) |
 
 **Typography rules:**
 - Use `.monospaced` design variant for ALL numeric aviation data (speeds, altitudes, bearings, frequencies) to ensure digit alignment
 - Use `.rounded` design variant ONLY for prominent identifiers (airport ICAO in sheet header)
-- Two weights maximum in any single view: `.regular`/`.medium` for labels + `.semibold`/`.bold` for values
+- Two weights across the entire type system: `.medium` for labels, secondary text, and body content + `.semibold` for primary values, headings, and emphasis
 - Unit labels always `.caption2` and `.secondary` foreground, positioned adjacent to their value with `lastTextBaseline` alignment
 
 ---
@@ -114,6 +104,8 @@ This app uses SwiftUI semantic colors exclusively. No hardcoded hex values excep
 | Airspace | `.orange` | Airspace boundary tint on layer toggle |
 | Navaids | `.purple` | Navaid layer tint |
 | Stale | `.gray` | Weather data >2 hours old |
+
+> **Intentional dual-role note:** `.red` carries two distinct semantic roles in this app: (1) FAA IFR flight category color (data-driven, used for weather dots and staleness badges) and (2) danger/alert UI state (TFR banner, NEAREST button background). These are distinguishable by context -- FAA IFR red appears as small colored dots and badge backgrounds in weather UI, while danger red appears as full-width banners and prominent button fills. This dual usage is intentional and consistent with aviation app conventions (ForeFlight, Garmin Pilot) where red universally signals "requires attention" across both weather categories and system alerts.
 
 ### Accent reserved for:
 - Map mode toggle button tint (north-up / track-up)
@@ -188,15 +180,15 @@ This app uses SwiftUI semantic colors exclusively. No hardcoded hex values excep
 
 | Component | File | Key Visual Properties |
 |-----------|------|----------------------|
-| `InstrumentStripView` | `Views/Map/InstrumentStripView.swift` | Full-width bottom bar, `.ultraThinMaterial` background, rounded rect (12pt radius), 12pt horizontal / 8pt vertical padding |
+| `InstrumentStripView` | `Views/Map/InstrumentStripView.swift` | Full-width bottom bar, `.ultraThinMaterial` background, rounded rect (16pt radius), 16pt horizontal / 8pt vertical padding |
 | `InstrumentCell` | (nested in InstrumentStripView) | `.caption2` label, `.title3.monospaced.semibold` value, `.caption2` unit, 60pt min width, 4pt horizontal padding |
-| `NearestAirportHUD` | `Views/Map/NearestAirportHUD.swift` | Capsule shape, `.ultraThinMaterial`, 10pt horizontal / 6pt vertical padding, monospaced caption for ICAO and distance |
-| `AirportInfoSheet` | `Views/Map/AirportInfoSheet.swift` | `.presentationDetents([.medium])`, `.regularMaterial` background, 20pt horizontal padding, two-column layout |
+| `NearestAirportHUD` | `Views/Map/NearestAirportHUD.swift` | Capsule shape, `.ultraThinMaterial`, 8pt horizontal / 4pt vertical padding, monospaced caption for ICAO and distance |
+| `AirportInfoSheet` | `Views/Map/AirportInfoSheet.swift` | `.presentationDetents([.medium])`, `.regularMaterial` background, 24pt horizontal padding, two-column layout |
 | `FlightCategoryDot` | `Views/Components/FlightCategoryDot.swift` | 12pt default circle, FAA standard colors |
-| `WeatherBadge` | `Views/Components/WeatherBadge.swift` | Capsule shape, 6pt horizontal / 2pt vertical padding, color-coded dot + text |
-| `SearchBar` | `Views/Components/SearchBar.swift` | `.regularMaterial` background, 10pt corner radius, 10pt internal padding, magnifying glass + clear button |
+| `WeatherBadge` | `Views/Components/WeatherBadge.swift` | Capsule shape, 8pt horizontal / 4pt vertical padding, color-coded dot + text |
+| `SearchBar` | `Views/Components/SearchBar.swift` | `.regularMaterial` background, 8pt corner radius, 8pt internal padding, magnifying glass + clear button |
 | `LayerControlsView` | `Views/Map/LayerControlsView.swift` | VStack of 44pt circular/rounded rect buttons, `.ultraThinMaterial`, right edge placement |
-| `InfoChip` | (nested in AirportInfoSheet) | Capsule, `.secondary.opacity(0.12)` background, SF Symbol + `.caption` text, 8pt horizontal / 4pt vertical padding |
+| `InfoChip` | (nested in AirportInfoSheet) | Capsule, `.secondary.opacity(0.12)` background, SF Symbol + `.subheadline` text, 8pt horizontal / 4pt vertical padding |
 | `MapView` | `Views/Map/MapView.swift` | UIViewRepresentable wrapping `MLNMapView`, fills available space, `.ignoresSafeArea(edges: .top)` |
 
 ---
@@ -253,7 +245,7 @@ This app uses SwiftUI semantic colors exclusively. No hardcoded hex values excep
 
 - Presented as `.sheet` with `.presentationDetents([.medium])`
 - Two-column layout (frequencies+runways left, weather right)
-- 20pt horizontal padding throughout
+- 24pt horizontal padding throughout
 - Material background (`.presentationBackground(.regularMaterial)`)
 
 ---
