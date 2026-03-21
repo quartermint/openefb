@@ -48,11 +48,19 @@ final class AppState {
     var distanceToNext: Double?        // nautical miles
     var estimatedTimeEnroute: TimeInterval?  // seconds
     var directToAirport: Airport?
+    var activePlanDeparture: String?     // ICAO of departure for summary card
+    var activePlanDestination: String?   // ICAO of destination for summary card
+    var activePlanFuelGallons: Double?   // Estimated fuel for summary card
 
     // MARK: - Profile State
 
     var activeAircraftProfileID: UUID?
     var activePilotProfileID: UUID?
+
+    // MARK: - Shared Services (set by MapContainerView, used by other tabs)
+
+    var sharedDatabaseService: (any DatabaseServiceProtocol)?
+    var sharedMapService: MapService?
 
     // MARK: - System State
 
