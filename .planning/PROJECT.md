@@ -12,26 +12,29 @@ A pilot can install the app, fly with it as their primary EFB, record their flig
 
 ### Validated
 
-(None yet - ship to validate)
+Validated in Phase 1: Foundation + Navigation Core
+- [x] Moving map with GPS ownship tracking, ground speed, altitude, vertical speed, track
+- [x] VFR sectional chart raster overlay with opacity control
+- [x] 20,000+ US airports from FAA NASR data with R-tree spatial queries
+- [x] Airport info sheet: runways, frequencies, field elevation, weather, remarks
+- [x] METAR/TAF weather with flight category color coding (VFR/MVFR/IFR/LIFR)
+- [x] Weather map dots color-coded by flight category
+- [x] Instrument strip: GS, ALT, VSI, TRK, DTG, ETE
+- [x] Nearest airport emergency feature with distance, bearing, runways, direct-to
+- [x] Airspace boundary visualization with Class B/C/D proximity alerts
+- [x] Map modes: VFR sectional, street map, satellite, terrain
+- [x] Layer controls: airspace, TFRs, airports, navaids, weather on/off
+- [x] Airport/navaid search by identifier, name, city
+- [x] Offline-capable: bundled airport DB, downloaded chart tiles, cached weather
+- [x] Background location for in-flight recording
+- [x] Network reachability monitoring with graceful degradation
 
 ### Active
 
-- [ ] Moving map with GPS ownship tracking, ground speed, altitude, vertical speed, track
-- [ ] VFR sectional chart raster overlay with opacity control
-- [ ] 20,000+ US airports from FAA NASR data with R-tree spatial queries
-- [ ] Airport info sheet: runways, frequencies, field elevation, weather, remarks
-- [ ] METAR/TAF weather with flight category color coding (VFR/MVFR/IFR/LIFR)
-- [ ] Weather map dots color-coded by flight category
 - [ ] Basic flight planning: departure, destination, route on map, distance/time/fuel
-- [ ] Instrument strip: GS, ALT, VSI, TRK, DTG, ETE
-- [ ] Nearest airport emergency feature with distance, bearing, runways, direct-to
-- [ ] Live TFR display from FAA data with proximity alerts
-- [ ] Airspace boundary visualization with Class B/C/D proximity alerts
+- [ ] Live TFR display from FAA data with proximity alerts (currently sample data)
 - [ ] Aircraft profile: N-number, type, fuel capacity, burn rate, cruise speed, V-speeds
 - [ ] Pilot profile: name, certificate, medical class/expiry, flight review date
-- [ ] Map modes: VFR sectional, street map, satellite, terrain
-- [ ] Layer controls: airspace, TFRs, airports, navaids, weather on/off
-- [ ] Airport/navaid search by identifier, name, city
 - [ ] One-tap flight recording: GPS track + cockpit audio + transcription
 - [ ] Auto-start recording when ground speed exceeds threshold
 - [ ] Cockpit-optimized audio engine (6+ hour recording, configurable quality)
@@ -42,9 +45,6 @@ A pilot can install the app, fly with it as their primary EFB, record their flig
 - [ ] Digital logbook with entries auto-populated from recording data
 - [ ] Currency tracking: medical expiry, flight review, night landings (61.57)
 - [ ] Track replay: playback on map with synchronized audio and transcript
-- [ ] Offline-capable: bundled airport DB, downloaded chart tiles, cached weather
-- [ ] Background location for in-flight recording
-- [ ] Network reachability monitoring with graceful degradation
 - [ ] Public TestFlight distribution
 
 ### Out of Scope
@@ -129,5 +129,9 @@ Public TestFlight beta. VFR GA pilots, 50-150 hrs/year, iPad in cockpit. Must wo
 | GeoJSON sources over annotations | Supports 20K+ airports without performance degradation. Clustering built-in | - Pending |
 | Public TestFlight (not private) | Broader testing validates the product for diverse pilots, aircraft, and regions | - Pending |
 
+## Current State
+
+Phase 1 complete — 25,071 US airports, moving map with MapLibre + VFR sectional overlay, NOAA weather, airspace/TFR boundaries, instrument strip, nearest airport HUD, airport search. 30+ Swift files, build verified on iPad Pro simulator.
+
 ---
-*Last updated: 2026-03-20 after initialization*
+*Last updated: 2026-03-21 after Phase 1 completion*
