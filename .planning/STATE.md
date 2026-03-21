@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-02-PLAN.md (aviation database, GRDB wrapper, NASR importer)
-last_updated: "2026-03-21T02:08:50.015Z"
+stopped_at: Completed 01-03-PLAN.md (moving map layer)
+last_updated: "2026-03-21T02:26:43.070Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 01 (foundation-navigation-core) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 3 of 6
 *Updated after each plan completion*
 | Phase 01 P01 | 16min | 2 tasks | 11 files |
 | Phase 01 P02 | 14min | 2 tasks | 5 files |
+| Phase 01 P03 | 14min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 01]: AviationDatabase uses DatabasePool (not DatabaseQueue) for concurrent reads with WAL mode
 - [Phase 01]: Seed database (522 airports) for Phase 1; full 20K NASR import deferred to future iteration
 - [Phase 01]: Copy-on-first-launch to Application Support/efb-212/ subdirectory for write access
+- [Phase 01]: MapService runs on MainActor (not actor) because MLNMapView is UIKit main-thread-only
+- [Phase 01]: Used SQLite3 C API directly for MBTiles metadata read to avoid GRDB dependency in MapService
+- [Phase 01]: Ownship chevron rendered programmatically via UIGraphicsImageRenderer (32pt blue triangle)
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T02:08:49.955Z
-Stopped at: Completed 01-02-PLAN.md (aviation database, GRDB wrapper, NASR importer)
+Last session: 2026-03-21T02:26:43.067Z
+Stopped at: Completed 01-03-PLAN.md (moving map layer)
 Resume file: None

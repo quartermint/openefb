@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — @Observable AppState, shared types, domain models, service protocols, SwiftData V1 schema, app entry point
 - [x] 01-02-PLAN.md — Aviation database: bundled SQLite with NASR airports, GRDB R-tree spatial index, FTS5 search, NASR importer tool
-- [ ] 01-03-PLAN.md — Map layer: MapLibre UIViewRepresentable, GeoJSON sources, ownship GPS, VFR sectional overlay, layer toggles, LocationService
+- [x] 01-03-PLAN.md — Map layer: MapLibre UIViewRepresentable, GeoJSON sources, ownship GPS, VFR sectional overlay, layer toggles, LocationService
 - [ ] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
 - [ ] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, nearest airport list
 - [ ] 01-06-PLAN.md — Final assembly: airport search, MapContainerView wiring with all services
@@ -127,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Navigation Core | 0/6 | Planned | - |
+| 1. Foundation + Navigation Core | 3/6 | In Progress|  |
 | 2. Profiles + Flight Planning | 0/3 | Not started | - |
 | 3. Flight Recording Engine | 0/3 | Not started | - |
 | 4. AI Debrief + Logbook | 0/4 | Not started | - |
