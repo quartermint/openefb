@@ -23,14 +23,14 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 - [x] **DATA-02**: Pilot can tap any airport to see info sheet: runways (length/width/surface), frequencies, elevation, weather, remarks
 - [x] **DATA-03**: Pilot can search airports and navaids by ICAO identifier, name, or city
 - [x] **DATA-04**: Pilot sees Class B, C, D airspace boundaries rendered on the map with floor/ceiling labels
-- [ ] **DATA-05**: App displays live TFR polygons from FAA data on the map
-- [ ] **DATA-06**: App alerts pilot when approaching Class B/C/D airspace or active TFR
+- [x] **DATA-05**: App displays live TFR polygons from FAA data on the map
+- [x] **DATA-06**: App alerts pilot when approaching Class B/C/D airspace or active TFR
 
 ### Weather
 
-- [ ] **WX-01**: Pilot can view current METAR and TAF for any airport with flight category color coding (VFR/MVFR/IFR/LIFR)
-- [ ] **WX-02**: Map displays color-coded weather dots at reporting stations by flight category
-- [ ] **WX-03**: All weather data displays age/staleness badge showing time since observation
+- [x] **WX-01**: Pilot can view current METAR and TAF for any airport with flight category color coding (VFR/MVFR/IFR/LIFR)
+- [x] **WX-02**: Map displays color-coded weather dots at reporting stations by flight category
+- [x] **WX-03**: All weather data displays age/staleness badge showing time since observation
 
 ### Flight Planning
 
@@ -68,7 +68,7 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 ### Infrastructure
 
 - [x] **INFRA-01**: App works offline with bundled airport database, pre-downloaded chart tiles, and cached weather data
-- [ ] **INFRA-02**: App monitors network reachability and clearly indicates when operating with cached/stale data
+- [x] **INFRA-02**: App monitors network reachability and clearly indicates when operating with cached/stale data
 - [x] **INFRA-03**: Chart tiles are served from CDN with 56-day FAA cycle expiration metadata; app warns when charts are expired
 - [ ] **INFRA-04**: App includes privacy manifest compliant with App Store requirements
 - [ ] **INFRA-05**: App is distributed via public TestFlight
@@ -124,11 +124,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete |
 | DATA-04 | Phase 1 | Complete |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
-| WX-01 | Phase 1 | Pending |
-| WX-02 | Phase 1 | Pending |
-| WX-03 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
+| WX-01 | Phase 1 | Complete |
+| WX-02 | Phase 1 | Complete |
+| WX-03 | Phase 1 | Complete |
 | PLAN-01 | Phase 2 | Pending |
 | PLAN-02 | Phase 2 | Pending |
 | PLAN-03 | Phase 2 | Pending |
@@ -148,7 +148,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REPLAY-01 | Phase 5 | Pending |
 | REPLAY-02 | Phase 5 | Pending |
 | INFRA-01 | Phase 1 | Complete |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 6 | Pending |
 | INFRA-05 | Phase 6 | Pending |

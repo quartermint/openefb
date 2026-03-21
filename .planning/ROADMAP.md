@@ -37,7 +37,7 @@ Plans:
 - [x] 01-01-PLAN.md — @Observable AppState, shared types, domain models, service protocols, SwiftData V1 schema, app entry point
 - [x] 01-02-PLAN.md — Aviation database: bundled SQLite with NASR airports, GRDB R-tree spatial index, FTS5 search, NASR importer tool
 - [x] 01-03-PLAN.md — Map layer: MapLibre UIViewRepresentable, GeoJSON sources, ownship GPS, VFR sectional overlay, layer toggles, LocationService
-- [ ] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
+- [x] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
 - [x] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, nearest airport list
 - [ ] 01-06-PLAN.md — Final assembly: airport search, MapContainerView wiring with all services
 

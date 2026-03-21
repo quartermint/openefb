@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-05-PLAN.md (instrument strip + nearest airport)
-last_updated: "2026-03-21T02:33:45.202Z"
+stopped_at: Completed 01-04-PLAN.md (weather, TFR, proximity alerts, airport info sheet)
+last_updated: "2026-03-21T02:40:45.745Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 01 (foundation-navigation-core) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: 5 of 6
 | Phase 01 P02 | 14min | 2 tasks | 5 files |
 | Phase 01 P03 | 14min | 2 tasks | 10 files |
 | Phase 01 P05 | 4min | 1 tasks | 4 files |
+| Phase 01 P04 | 10min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Ownship chevron rendered programmatically via UIGraphicsImageRenderer (32pt blue triangle)
 - [Phase 01]: Direct-to sets activeFlightPlan=true and computes DTG/ETE from ownship position and ground speed
 - [Phase 01]: NearestAirportViewModel skips DB query when ownship moves <0.5 NM to avoid excessive R-tree queries
+- [Phase 01]: WeatherService as actor with nonisolated static constants for thread-safe cache
+- [Phase 01]: MapService.updateWeatherDots accepts stationCoordinates dict for airport-correlated weather positions
+- [Phase 01]: TFR service ships with 5 hardcoded sample TFRs and TFR_DATA_IS_SAMPLE disclaimer flag
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T02:33:45.196Z
-Stopped at: Completed 01-05-PLAN.md (instrument strip + nearest airport)
+Last session: 2026-03-21T02:40:45.740Z
+Stopped at: Completed 01-04-PLAN.md (weather, TFR, proximity alerts, airport info sheet)
 Resume file: None
