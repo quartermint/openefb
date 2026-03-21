@@ -11,10 +11,10 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 - [x] **NAV-01**: Pilot sees their GPS position on the map with heading indicator updated in real time
 - [x] **NAV-02**: Pilot can overlay VFR sectional charts on the map with adjustable opacity
-- [ ] **NAV-03**: Pilot sees instrument strip showing GS (kts), ALT (ft MSL), VSI (fpm), TRK (degrees), DTG (nm), ETE
+- [x] **NAV-03**: Pilot sees instrument strip showing GS (kts), ALT (ft MSL), VSI (fpm), TRK (degrees), DTG (nm), ETE
 - [x] **NAV-04**: Pilot can switch between map modes: VFR sectional, street, satellite, terrain
 - [x] **NAV-05**: Pilot can toggle map layers on/off: airspace, TFRs, airports, navaids, weather
-- [ ] **NAV-06**: Pilot can find nearest airports sorted by distance with bearing, runways, and direct-to navigation
+- [x] **NAV-06**: Pilot can find nearest airports sorted by distance with bearing, runways, and direct-to navigation
 - [x] **NAV-07**: App tracks GPS position in background when screen is off or another app is in foreground
 
 ### Aviation Data
@@ -115,10 +115,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | NAV-01 | Phase 1 | Complete |
 | NAV-02 | Phase 1 | Complete |
-| NAV-03 | Phase 1 | Pending |
+| NAV-03 | Phase 1 | Complete |
 | NAV-04 | Phase 1 | Complete |
 | NAV-05 | Phase 1 | Complete |
-| NAV-06 | Phase 1 | Pending |
+| NAV-06 | Phase 1 | Complete |
 | NAV-07 | Phase 1 | Complete |
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
