@@ -40,7 +40,7 @@ Plans:
 - [x] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
 - [x] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, nearest airport list
 - [x] 01-06-PLAN.md — Final assembly: airport search, MapContainerView wiring with all services
-- [ ] 01-07-PLAN.md — Gap closure: NASR importer rewrite for 20K+ airports (DATA-01), MapView animation guard fix
+- [x] 01-07-PLAN.md — Gap closure: NASR importer rewrite for 20K+ airports (DATA-01), MapView animation guard fix
 
 ### Phase 2: Profiles + Flight Planning
 **Goal**: A pilot can enter their aircraft specs and certificate information, create a basic A→B flight plan with fuel and time calculations, and check their currency status before flying
