@@ -43,7 +43,7 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 - [x] **REC-01**: Pilot can start/stop flight recording with one tap, capturing GPS track and cockpit audio simultaneously
 - [x] **REC-02**: Recording auto-starts when ground speed exceeds configurable threshold (default 15 kts)
-- [ ] **REC-03**: Audio engine records cockpit audio for 6+ hours with configurable quality profiles
+- [x] **REC-03**: Audio engine records cockpit audio for 6+ hours with configurable quality profiles
 - [ ] **REC-04**: App performs real-time speech-to-text with aviation vocabulary post-processing (N-numbers, altitudes, headings, frequencies, runways)
 - [x] **REC-05**: App automatically detects flight phases: preflight, taxi, takeoff, departure, cruise, approach, landing, postflight
 
@@ -135,7 +135,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-04 | Phase 2 | Complete |
 | REC-01 | Phase 3 | Complete |
 | REC-02 | Phase 3 | Complete |
-| REC-03 | Phase 3 | Pending |
+| REC-03 | Phase 3 | Complete |
 | REC-04 | Phase 3 | Pending |
 | REC-05 | Phase 3 | Complete |
 | DEBRIEF-01 | Phase 4 | Pending |

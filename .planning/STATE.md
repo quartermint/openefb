@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: "Completed 03-01-PLAN.md (Recording infrastructure: types, protocols, GRDB database, coordinator, phase detector, tests)"
-last_updated: "2026-03-21T08:58:42.188Z"
+stopped_at: Completed 03-02-PLAN.md (AudioRecorder with AVAudioEngine dual output, interruption handling, RecordingCoordinator wiring)
+last_updated: "2026-03-21T09:14:32.825Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 03 (flight-recording-engine) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 2 of 3
 | Phase 02 P02 | 5min | 2 tasks | 8 files |
 | Phase 02 P03 | 5min | 2 tasks | 8 files |
 | Phase 03 P01 | 17min | 2 tasks | 16 files |
+| Phase 03 P02 | 12min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,10 @@ Recent decisions affecting current work:
 - [Phase 03]: Single recording.sqlite database with flightID foreign key (not per-flight databases)
 - [Phase 03]: FlightPhaseDetector as struct (pure-function state machine, no actor isolation needed)
 - [Phase 03]: Placeholder implementations for AudioRecorder/TranscriptionService for independent Plan 02/03 development
+- [Phase 03]: AVAudioEngine exclusively (not AVAudioRecorder) for dual-output: file write + buffer streaming
+- [Phase 03]: Actor setter methods for cross-actor callback wiring (setOnBufferAvailable, setOnInterruptionGap)
+- [Phase 03]: didBecomeActive fallback for interruptions without end notification (Apple docs: not guaranteed)
+- [Phase 03]: Gap markers stored as TranscriptSegmentRecord with [INTERRUPTION: reason] text
 
 ### Pending Todos
 
@@ -114,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T08:58:42.186Z
-Stopped at: Completed 03-01-PLAN.md (Recording infrastructure: types, protocols, GRDB database, coordinator, phase detector, tests)
+Last session: 2026-03-21T09:14:32.822Z
+Stopped at: Completed 03-02-PLAN.md (AudioRecorder with AVAudioEngine dual output, interruption handling, RecordingCoordinator wiring)
 Resume file: None
