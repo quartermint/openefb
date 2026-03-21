@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md (SwiftData models + CurrencyService + 23 tests)
-last_updated: "2026-03-21T08:00:08.686Z"
+stopped_at: Completed 02-02-PLAN.md (Profile Management UI)
+last_updated: "2026-03-21T08:08:23.093Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 10
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 02 (profiles-flight-planning) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Plan: 2 of 3
 | Phase 01 P06 | 4min | 2 tasks | 3 files |
 | Phase 01 P07 | 7min | 2 tasks | 4 files |
 | Phase 02 P01 | 30min | 2 tasks | 20 files |
+| Phase 02 P02 | 5min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [Phase 02]: JSON-encoded Data columns for VSpeeds/NightLandingEntries -- avoids SwiftData relationship complexity
 - [Phase 02]: Test host guard via NSClassFromString(XCTestCase) to skip MapLibre init during testing
 - [Phase 02]: Disabled 7 pre-existing broken test files (API drift from Phase 1 refactoring)
+- [Phase 02]: ViewModel as optional @State initialized in onAppear for Environment dependency access
+- [Phase 02]: Tab currency badge counts non-current statuses via direct SwiftData fetch + CurrencyService in ContentView
+- [Phase 02]: CurrencyBadge includes status text alongside color dot for accessibility
 
 ### Pending Todos
 
@@ -102,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T08:00:08.684Z
-Stopped at: Completed 02-01-PLAN.md (SwiftData models + CurrencyService + 23 tests)
+Last session: 2026-03-21T08:08:23.090Z
+Stopped at: Completed 02-02-PLAN.md (Profile Management UI)
 Resume file: None

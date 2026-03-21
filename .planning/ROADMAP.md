@@ -55,8 +55,8 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — SwiftData models (AircraftProfile, PilotProfile, FlightPlanRecord), CurrencyService with FAR 61.23/61.56/61.57, AppState profile state, unit tests
-- [ ] 02-02-PLAN.md — Aircraft/pilot profile views with CRUD, currency badges (green/yellow/red), night landing manual entry, Aircraft tab wiring
-- [ ] 02-03-PLAN.md — Flight planning: FlightPlanViewModel, MapService route layer (magenta great-circle line), FlightPlanView with airport search, summary card, Flights tab wiring
+- [x] 02-02-PLAN.md — Aircraft/pilot profile views with CRUD, currency badges (green/yellow/red), night landing manual entry, Aircraft tab wiring
+- [x] 02-03-PLAN.md — Flight planning: FlightPlanViewModel, MapService route layer (magenta great-circle line), FlightPlanView with airport search, summary card, Flights tab wiring
 
 ### Phase 3: Flight Recording Engine
 **Goal**: A pilot can start recording with one tap (or it auto-starts on takeoff), capturing GPS track and cockpit audio simultaneously with real-time transcription and automatic flight phase detection, and stop cleanly including after interruptions
