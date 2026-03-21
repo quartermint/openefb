@@ -73,7 +73,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Recording types, protocols, GRDB recording database, FlightRecord SwiftData model, RecordingCoordinator actor, FlightPhaseDetector state machine, TrackRecorder GPS capture, auto-start logic, Wave 0 tests
 - [x] 03-02-PLAN.md — AudioRecorder with AVAudioEngine dual output (file write + buffer tap), audio quality profiles, AVAudioSession interruption handling, headphone disconnect recovery, Info.plist background modes
-- [ ] 03-03-PLAN.md — TranscriptionService with SpeechAnalyzer (iOS 26) + SFSpeechRecognizer fallback, AviationVocabularyProcessor, RecordingViewModel, RecordingOverlayView UI, MapContainerView wiring
+- [x] 03-03-PLAN.md — TranscriptionService with SpeechAnalyzer (iOS 26) + SFSpeechRecognizer fallback, AviationVocabularyProcessor, RecordingViewModel, RecordingOverlayView UI, MapContainerView wiring
 
 ### Phase 4: AI Debrief + Logbook
 **Goal**: After landing, a pilot can view an AI-generated post-flight debrief (narrative, per-phase observations, improvements, rating) on-device, confirm an auto-populated logbook entry, and see currency warnings if anything is approaching expiry
