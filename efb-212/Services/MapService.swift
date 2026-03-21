@@ -24,6 +24,8 @@ final class MapService {
     private var weatherSource: MLNShapeSource?
     private var tfrSource: MLNShapeSource?
     private var ownshipSource: MLNShapeSource?
+    private var routeSource: MLNShapeSource?
+    private var routeAnnotations: [MLNAnnotation] = []
     private var sectionalLayer: MLNRasterStyleLayer?
 
     /// Chart expiration date read from MBTiles metadata (INFRA-03)
@@ -54,6 +56,7 @@ final class MapService {
         addAirspaceLayer(to: style)
         addWeatherDotLayer(to: style)
         addTFRLayer(to: style)
+        addRouteLayer(to: style)
     }
 
     // MARK: - Ownship Layer
@@ -526,6 +529,66 @@ final class MapService {
         tfrSource?.shape = collection
     }
 
+    // MARK: - Route Layer
+
+    private func addRouteLayer(to style: MLNStyle) {
+        // GeoJSON source for the flight plan route line
+        var emptyCoords: [CLLocationCoordinate2D] = []
+        let emptyPolyline = MLNPolylineFeature(coordinates: &emptyCoords, count: 0)
+        let source = MLNShapeSource(identifier: "route-line", shape: emptyPolyline, options: nil)
+        style.addSource(source)
+        self.routeSource = source
+
+        // Magenta (systemPink) 3pt line with rounded caps/joins
+        let lineLayer = MLNLineStyleLayer(identifier: "route-line-layer", source: source)
+        lineLayer.lineColor = NSExpression(forConstantValue: UIColor.systemPink)
+        lineLayer.lineWidth = NSExpression(forConstantValue: 3.0)
+        lineLayer.lineCap = NSExpression(forConstantValue: "round")
+        lineLayer.lineJoin = NSExpression(forConstantValue: "round")
+        style.addLayer(lineLayer)
+    }
+
+    /// Draw a great-circle route line between departure and destination.
+    func updateRoute(departure: CLLocationCoordinate2D, destination: CLLocationCoordinate2D) {
+        let coords = CLLocationCoordinate2D.greatCirclePoints(from: departure, to: destination, count: 100)
+        var mutableCoords = coords
+        let polyline = MLNPolylineFeature(coordinates: &mutableCoords, count: UInt(coords.count))
+        routeSource?.shape = polyline
+    }
+
+    /// Clear the route line from the map.
+    func clearRoute() {
+        var emptyCoords: [CLLocationCoordinate2D] = []
+        let emptyPolyline = MLNPolylineFeature(coordinates: &emptyCoords, count: 0)
+        routeSource?.shape = emptyPolyline
+
+        // Remove route annotations (departure/destination pins)
+        if !routeAnnotations.isEmpty {
+            mapView?.removeAnnotations(routeAnnotations)
+            routeAnnotations.removeAll()
+        }
+    }
+
+    /// Add departure and destination pin annotations for the route.
+    func addRoutePins(departure: CLLocationCoordinate2D, destination: CLLocationCoordinate2D) {
+        // Remove previous route annotations
+        if !routeAnnotations.isEmpty {
+            mapView?.removeAnnotations(routeAnnotations)
+            routeAnnotations.removeAll()
+        }
+
+        let depAnnotation = MLNPointAnnotation()
+        depAnnotation.coordinate = departure
+        depAnnotation.title = "DEP"
+
+        let destAnnotation = MLNPointAnnotation()
+        destAnnotation.coordinate = destination
+        destAnnotation.title = "DEST"
+
+        routeAnnotations = [depAnnotation, destAnnotation]
+        mapView?.addAnnotations(routeAnnotations)
+    }
+
     // MARK: - Layer Visibility
 
     /// Toggle style layer visibility by MapLayer enum.
@@ -547,7 +610,7 @@ final class MapService {
         case .tfrs: return ["tfr-fill", "tfr-border"]
         case .ownship: return ["ownship-symbol"]
         case .sectional: return ["sectional-overlay"]
-        case .route: return []  // Route layer added in flight planning plan
+        case .route: return ["route-line-layer"]
         }
     }
 
