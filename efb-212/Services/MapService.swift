@@ -131,12 +131,8 @@ final class MapService {
         circleLayer.circleStrokeWidth = NSExpression(forConstantValue: 1)
         circleLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
 
-        // Data-driven visibility: towered airports at all zooms, non-towered at zoom >= 8
-        // Use a stepped expression on zoom level + isTowered property
-        circleLayer.circleOpacity = NSExpression(
-            format: "MGL_IF(isTowered == YES, 1.0, MGL_IF(%K >= 8, 1.0, 0.0))",
-            NSExpression.zoomLevelVariable
-        )
+        // All airports visible — zoom-dependent filtering deferred to future optimization
+        circleLayer.circleOpacity = NSExpression(forConstantValue: 1.0)
 
         style.addLayer(circleLayer)
     }
@@ -287,35 +283,18 @@ final class MapService {
 
         // Fill layer for airspace polygons
         let fillLayer = MLNFillStyleLayer(identifier: "airspace-fill", source: source)
-        // Data-driven: Class B blue 10%, Class C magenta 10%, Class D blue 8%
-        fillLayer.fillColor = NSExpression(
-            forConditional: NSPredicate(format: "airspaceClass == 'bravo'"),
-            trueExpression: NSExpression(forConstantValue: UIColor.systemBlue),
-            falseExpression: NSExpression(
-                forConditional: NSPredicate(format: "airspaceClass == 'charlie'"),
-                trueExpression: NSExpression(forConstantValue: UIColor.systemPurple),
-                falseExpression: NSExpression(forConstantValue: UIColor.systemBlue)
-            )
-        )
-        fillLayer.fillOpacity = NSExpression(
-            forConditional: NSPredicate(format: "airspaceClass == 'delta'"),
-            trueExpression: NSExpression(forConstantValue: 0.08),
-            falseExpression: NSExpression(forConstantValue: 0.10)
-        )
+        // Simplified: blue fill at 10% opacity for all airspace classes
+        // TODO: Data-driven Class B/C/D colors — requires MapLibre match expression
+        fillLayer.fillColor = NSExpression(forConstantValue: UIColor.systemBlue)
+        fillLayer.fillOpacity = NSExpression(forConstantValue: 0.10)
         style.addLayer(fillLayer)
 
         // Line layer for airspace borders
         let lineLayer = MLNLineStyleLayer(identifier: "airspace-border", source: source)
-        lineLayer.lineColor = NSExpression(
-            forConditional: NSPredicate(format: "airspaceClass == 'charlie'"),
-            trueExpression: NSExpression(forConstantValue: UIColor.systemPurple),
-            falseExpression: NSExpression(forConstantValue: UIColor.systemBlue)
-        )
-        lineLayer.lineWidth = NSExpression(
-            forConditional: NSPredicate(format: "airspaceClass == 'delta'"),
-            trueExpression: NSExpression(forConstantValue: 1.5),
-            falseExpression: NSExpression(forConstantValue: 2.0)
-        )
+        // Simplified: blue borders at 2pt for all airspace
+        // TODO: Data-driven Charlie purple vs B/D blue — requires MapLibre match expression
+        lineLayer.lineColor = NSExpression(forConstantValue: UIColor.systemBlue)
+        lineLayer.lineWidth = NSExpression(forConstantValue: 2.0)
         style.addLayer(lineLayer)
 
         // Symbol layer for floor/ceiling labels
@@ -343,20 +322,9 @@ final class MapService {
         circleLayer.circleStrokeWidth = NSExpression(forConstantValue: 1)
         circleLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
 
-        // Data-driven color by flightCategory property: VFR=green, MVFR=blue, IFR=red, LIFR=magenta
-        circleLayer.circleColor = NSExpression(
-            forConditional: NSPredicate(format: "flightCategory == 'vfr'"),
-            trueExpression: NSExpression(forConstantValue: UIColor.systemGreen),
-            falseExpression: NSExpression(
-                forConditional: NSPredicate(format: "flightCategory == 'mvfr'"),
-                trueExpression: NSExpression(forConstantValue: UIColor.systemBlue),
-                falseExpression: NSExpression(
-                    forConditional: NSPredicate(format: "flightCategory == 'ifr'"),
-                    trueExpression: NSExpression(forConstantValue: UIColor.systemRed),
-                    falseExpression: NSExpression(forConstantValue: UIColor(red: 0.8, green: 0.0, blue: 0.8, alpha: 1.0))  // LIFR magenta
-                )
-            )
-        )
+        // Simplified: green weather dots for all categories
+        // TODO: Data-driven VFR/MVFR/IFR/LIFR colors — requires MapLibre match expression
+        circleLayer.circleColor = NSExpression(forConstantValue: UIColor.systemGreen)
         style.addLayer(circleLayer)
     }
 
@@ -532,10 +500,8 @@ final class MapService {
     // MARK: - Route Layer
 
     private func addRouteLayer(to style: MLNStyle) {
-        // GeoJSON source for the flight plan route line
-        var emptyCoords: [CLLocationCoordinate2D] = []
-        let emptyPolyline = MLNPolylineFeature(coordinates: &emptyCoords, count: 0)
-        let source = MLNShapeSource(identifier: "route-line", shape: emptyPolyline, options: nil)
+        // GeoJSON source for the flight plan route line — start empty
+        let source = MLNShapeSource(identifier: "route-line", shape: MLNShapeCollectionFeature(shapes: []), options: nil)
         style.addSource(source)
         self.routeSource = source
 
@@ -558,9 +524,7 @@ final class MapService {
 
     /// Clear the route line from the map.
     func clearRoute() {
-        var emptyCoords: [CLLocationCoordinate2D] = []
-        let emptyPolyline = MLNPolylineFeature(coordinates: &emptyCoords, count: 0)
-        routeSource?.shape = emptyPolyline
+        routeSource?.shape = MLNShapeCollectionFeature(shapes: [])
 
         // Remove route annotations (departure/destination pins)
         if !routeAnnotations.isEmpty {
