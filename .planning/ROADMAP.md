@@ -113,12 +113,12 @@ Plans:
   2. Map renders 20K airports without frame drops on an iPad Pro M2 or later; background recording shows expected battery impact in Instruments; no memory leaks in recording lifecycle
   3. When chart tiles are within 7 days of their 56-day FAA expiration cycle, a visible warning badge appears on the map layer; tiles past expiry show a distinct expired indicator
   4. A public TestFlight link is live and any VFR pilot with an iPad running iOS 26 can install and use the app with no account required
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: Privacy manifest + App Store compliance — PrivacyInfo.xcprivacy (location, microphone, speech recognition), entitlements audit, background mode declarations, open-source repo hygiene (no credentials in history)
-- [ ] 06-02: Performance + hardening — Instruments profiling (map rendering at 20K airports, recording battery impact), chart expiration warning UI (7-day badge, expired state), weather staleness badge on all weather displays, real-device recording lifecycle testing (phone call, Siri, headphone disconnect)
-- [ ] 06-03: TestFlight submission — internal test build, external review submission, public TestFlight link, basic onboarding for first-time users
+- [ ] 06-01-PLAN.md — Privacy manifest: PrivacyInfo.xcprivacy with location, audio, UserDefaults declarations + automated validation tests
+- [ ] 06-02-PLAN.md — Settings view, beta banner, weather staleness expansion: replace Settings placeholder, add dismissable beta disclaimer, add weather age indicator to LayerControlsView
+- [ ] 06-03-PLAN.md — Onboarding + TestFlight prep: 3-screen first-time walkthrough, app entry point gate, human verification of integrated flow
 
 ## Progress
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Flight Recording Engine | 3/3 | Complete | 2026-03-21 |
 | 4. AI Debrief + Logbook | 0/3 | Planned | - |
 | 5. Track Replay | 0/2 | Planned | - |
-| 6. Polish + TestFlight | 0/3 | Not started | - |
+| 6. Polish + TestFlight | 0/3 | Planned | - |
 
 ---
 
