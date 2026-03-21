@@ -41,11 +41,11 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 ### Recording
 
-- [ ] **REC-01**: Pilot can start/stop flight recording with one tap, capturing GPS track and cockpit audio simultaneously
-- [ ] **REC-02**: Recording auto-starts when ground speed exceeds configurable threshold (default 15 kts)
+- [x] **REC-01**: Pilot can start/stop flight recording with one tap, capturing GPS track and cockpit audio simultaneously
+- [x] **REC-02**: Recording auto-starts when ground speed exceeds configurable threshold (default 15 kts)
 - [ ] **REC-03**: Audio engine records cockpit audio for 6+ hours with configurable quality profiles
 - [ ] **REC-04**: App performs real-time speech-to-text with aviation vocabulary post-processing (N-numbers, altitudes, headings, frequencies, runways)
-- [ ] **REC-05**: App automatically detects flight phases: preflight, taxi, takeoff, departure, cruise, approach, landing, postflight
+- [x] **REC-05**: App automatically detects flight phases: preflight, taxi, takeoff, departure, cruise, approach, landing, postflight
 
 ### AI Debrief
 
@@ -133,11 +133,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-02 | Phase 2 | Complete |
 | PLAN-03 | Phase 2 | Complete |
 | PLAN-04 | Phase 2 | Complete |
-| REC-01 | Phase 3 | Pending |
-| REC-02 | Phase 3 | Pending |
+| REC-01 | Phase 3 | Complete |
+| REC-02 | Phase 3 | Complete |
 | REC-03 | Phase 3 | Pending |
 | REC-04 | Phase 3 | Pending |
-| REC-05 | Phase 3 | Pending |
+| REC-05 | Phase 3 | Complete |
 | DEBRIEF-01 | Phase 4 | Pending |
 | DEBRIEF-02 | Phase 4 | Pending |
 | DEBRIEF-03 | Phase 4 | Pending |

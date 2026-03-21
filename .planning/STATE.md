@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: "Completed 02-03-PLAN.md (Flight planning: ViewModel, UI, route rendering, persistence)"
-last_updated: "2026-03-21T08:15:08.943Z"
+stopped_at: "Completed 03-01-PLAN.md (Recording infrastructure: types, protocols, GRDB database, coordinator, phase detector, tests)"
+last_updated: "2026-03-21T08:58:42.188Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 13
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** A pilot can install the app, fly with it as their primary EFB, record their flight, and get an AI debrief afterward — all free, all on-device, no account required.
-**Current focus:** Phase 02 — profiles-flight-planning
+**Current focus:** Phase 03 — flight-recording-engine
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
+Phase: 03 (flight-recording-engine) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Plan: Not started
 | Phase 02 P01 | 30min | 2 tasks | 20 files |
 | Phase 02 P02 | 5min | 2 tasks | 8 files |
 | Phase 02 P03 | 5min | 2 tasks | 8 files |
+| Phase 03 P01 | 17min | 2 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,10 @@ Recent decisions affecting current work:
 - [Phase 02]: CurrencyBadge includes status text alongside color dot for accessibility
 - [Phase 02]: Cross-tab service sharing via AppState (sharedDatabaseService, sharedMapService) for Flights tab to access Map services
 - [Phase 02]: Concrete DatabaseManager fallback in FlightPlanView when shared service is nil (no PlaceholderDatabaseService)
+- [Phase 03]: RecordingCoordinator.State uses nonisolated init() with @unchecked Sendable for actor-MainActor bridging
+- [Phase 03]: Single recording.sqlite database with flightID foreign key (not per-flight databases)
+- [Phase 03]: FlightPhaseDetector as struct (pure-function state machine, no actor isolation needed)
+- [Phase 03]: Placeholder implementations for AudioRecorder/TranscriptionService for independent Plan 02/03 development
 
 ### Pending Todos
 
@@ -109,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T08:08:50.198Z
-Stopped at: Completed 02-03-PLAN.md (Flight planning: ViewModel, UI, route rendering, persistence)
+Last session: 2026-03-21T08:58:42.186Z
+Stopped at: Completed 03-01-PLAN.md (Recording infrastructure: types, protocols, GRDB database, coordinator, phase detector, tests)
 Resume file: None
