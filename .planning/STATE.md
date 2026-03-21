@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-02-PLAN.md (Profile Management UI)
-last_updated: "2026-03-21T08:08:23.093Z"
+stopped_at: "Completed 02-03-PLAN.md (Flight planning: ViewModel, UI, route rendering, persistence)"
+last_updated: "2026-03-21T08:08:50.201Z"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -55,6 +55,7 @@ Plan: 3 of 3
 | Phase 01 P07 | 7min | 2 tasks | 4 files |
 | Phase 02 P01 | 30min | 2 tasks | 20 files |
 | Phase 02 P02 | 5min | 2 tasks | 8 files |
+| Phase 02 P03 | 5min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 02]: ViewModel as optional @State initialized in onAppear for Environment dependency access
 - [Phase 02]: Tab currency badge counts non-current statuses via direct SwiftData fetch + CurrencyService in ContentView
 - [Phase 02]: CurrencyBadge includes status text alongside color dot for accessibility
+- [Phase 02]: Cross-tab service sharing via AppState (sharedDatabaseService, sharedMapService) for Flights tab to access Map services
+- [Phase 02]: Concrete DatabaseManager fallback in FlightPlanView when shared service is nil (no PlaceholderDatabaseService)
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T08:08:23.090Z
-Stopped at: Completed 02-02-PLAN.md (Profile Management UI)
+Last session: 2026-03-21T08:08:50.198Z
+Stopped at: Completed 02-03-PLAN.md (Flight planning: ViewModel, UI, route rendering, persistence)
 Resume file: None

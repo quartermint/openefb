@@ -34,8 +34,8 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 ### Flight Planning
 
-- [ ] **PLAN-01**: Pilot can create a flight plan with departure, destination, and route displayed on map
-- [ ] **PLAN-02**: Flight plan shows distance (nm), estimated time, and estimated fuel burn
+- [x] **PLAN-01**: Pilot can create a flight plan with departure, destination, and route displayed on map
+- [x] **PLAN-02**: Flight plan shows distance (nm), estimated time, and estimated fuel burn
 - [x] **PLAN-03**: Pilot can store aircraft profile: N-number, type, fuel capacity, burn rate, cruise speed, V-speeds
 - [x] **PLAN-04**: Pilot can store pilot profile: name, certificate number, medical class/expiry, flight review date
 
@@ -129,8 +129,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WX-01 | Phase 1 | Complete |
 | WX-02 | Phase 1 | Complete |
 | WX-03 | Phase 1 | Complete |
-| PLAN-01 | Phase 2 | Pending |
-| PLAN-02 | Phase 2 | Pending |
+| PLAN-01 | Phase 2 | Complete |
+| PLAN-02 | Phase 2 | Complete |
 | PLAN-03 | Phase 2 | Complete |
 | PLAN-04 | Phase 2 | Complete |
 | REC-01 | Phase 3 | Pending |
