@@ -470,15 +470,15 @@ final class MapService {
     }
 
     /// Build GeoJSON FeatureCollection from weather cache for map dots.
-    func updateWeatherDots(_ weather: [WeatherCache]) {
+    /// Requires a coordinate lookup dictionary mapping station IDs to airport coordinates.
+    func updateWeatherDots(_ weather: [WeatherCache], stationCoordinates: [String: CLLocationCoordinate2D]) {
         let features = weather.compactMap { wx -> MLNPointFeature? in
-            guard let lat = getStationLatitude(wx.stationID),
-                  let lon = getStationLongitude(wx.stationID) else {
-                // Weather data without coordinates -- skip (coordinates come from airport DB)
+            guard let coordinate = stationCoordinates[wx.stationID] else {
+                // Weather data without coordinates -- skip (no matching airport in DB)
                 return nil
             }
             let feature = MLNPointFeature()
-            feature.coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            feature.coordinate = coordinate
             feature.attributes = [
                 "stationID": wx.stationID,
                 "flightCategory": wx.flightCategory.rawValue
@@ -565,11 +565,4 @@ final class MapService {
         mapView?.setCenter(coordinate, zoomLevel: zoom, direction: mapView?.direction ?? 0, animated: true)
     }
 
-    // MARK: - Helpers
-
-    /// Placeholder for weather dot coordinate lookup.
-    /// In practice, coordinates come from joining weather station ID with airport database.
-    /// Weather dots are populated by Plan 04 which passes coordinates directly.
-    private func getStationLatitude(_ stationID: String) -> Double? { nil }
-    private func getStationLongitude(_ stationID: String) -> Double? { nil }
 }
