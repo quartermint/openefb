@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-03-PLAN.md (debrief UI, currency bridge, warning banner, logbook tab wiring)
-last_updated: "2026-03-21T16:26:07.487Z"
+stopped_at: Completed 05-01-PLAN.md (ReplayEngine + MapService replay layers)
+last_updated: "2026-03-21T17:57:50.858Z"
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** A pilot can install the app, fly with it as their primary EFB, record their flight, and get an AI debrief afterward — all free, all on-device, no account required.
-**Current focus:** Phase 04 — AI Debrief + Logbook
+**Current focus:** Phase 05 — Track Replay
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
+Phase: 05 (Track Replay) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Plan: Not started
 | Phase 04 P02 | 45min | 2 tasks | 9 files |
 | Phase 04 P01 | 48min | 3 tasks | 9 files |
 | Phase 04 P03 | 7min | 2 tasks | 9 files |
+| Phase 05 P01 | 68min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,10 @@ Recent decisions affecting current work:
 - [Phase 04]: Shared RecordingDatabase via AppState.getOrCreateRecordingDatabase() -- avoids per-view database instance creation
 - [Phase 04]: CurrencyWarningBanner auto-computes on appear, dismissed per-session via AppState flag
 - [Phase 04]: PartiallyGenerated array elements non-optional -- direct rendering without unwrapping
+- [Phase 05]: PhaseMarkerFraction struct instead of tuple array for @Observable compatibility
+- [Phase 05]: Fixed GRDB UUID BLOB/TEXT mismatch: Column(flightID) == flightID instead of .uuidString
+- [Phase 05]: Replay layers added on-demand via addReplayLayers, not in onStyleLoaded
+- [Phase 05]: testTick() bypasses isPlaying guard for deterministic unit testing
 
 ### Pending Todos
 
@@ -132,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T16:18:26.012Z
-Stopped at: Completed 04-03-PLAN.md (debrief UI, currency bridge, warning banner, logbook tab wiring)
+Last session: 2026-03-21T17:57:50.856Z
+Stopped at: Completed 05-01-PLAN.md (ReplayEngine + MapService replay layers)
 Resume file: None

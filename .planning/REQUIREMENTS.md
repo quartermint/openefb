@@ -62,8 +62,8 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 ### Track Replay
 
-- [ ] **REPLAY-01**: Pilot can replay recorded flight on the map with position marker following the GPS track
-- [ ] **REPLAY-02**: Track replay synchronizes with cockpit audio playback and scrolling transcript timeline
+- [x] **REPLAY-01**: Pilot can replay recorded flight on the map with position marker following the GPS track
+- [x] **REPLAY-02**: Track replay synchronizes with cockpit audio playback and scrolling transcript timeline
 
 ### Infrastructure
 
@@ -145,8 +145,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOG-02 | Phase 4 | Complete |
 | LOG-03 | Phase 4 | Complete |
 | LOG-04 | Phase 4 | Complete |
-| REPLAY-01 | Phase 5 | Pending |
-| REPLAY-02 | Phase 5 | Pending |
+| REPLAY-01 | Phase 5 | Complete |
+| REPLAY-02 | Phase 5 | Complete |
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |

@@ -101,7 +101,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — ReplayEngine (@Observable time model with AVAudioPlayer sync, GPS interpolation, transcript matching), MapService replay track/marker layers, unit tests
+- [x] 05-01-PLAN.md — ReplayEngine (@Observable time model with AVAudioPlayer sync, GPS interpolation, transcript matching), MapService replay track/marker layers, unit tests
 - [ ] 05-02-PLAN.md — Replay UI (ReplayView, ReplayMapView, TranscriptPanelView, TimelineScrubBar), FlightHistoryListView, FlightDetailView Replay button, Flights tab Plans/History segmented control
 
 ### Phase 6: Polish + TestFlight
