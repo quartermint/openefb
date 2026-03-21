@@ -100,6 +100,25 @@ protocol ChartServiceProtocol: Sendable {
     func downloadedRegions() -> [ChartRegion]
 }
 
+// MARK: - Audio Recorder Protocol
+
+protocol AudioRecorderProtocol: Sendable {
+    func startRecording(flightID: UUID, profile: AudioQualityProfile, outputURL: URL) async throws
+    func stopRecording() async -> URL?
+    func pauseRecording() async
+    func resumeRecording() async throws
+    var isRecording: Bool { get async }
+    var audioLevel: Float { get async }  // dBFS
+}
+
+// MARK: - Transcription Service Protocol
+
+protocol TranscriptionServiceProtocol: Sendable {
+    func startTranscription(flightID: UUID) async throws
+    func stopTranscription() async
+    var isTranscribing: Bool { get async }
+}
+
 // MARK: - Placeholder Implementations
 
 /// Placeholder database service -- returns empty results for all queries.
@@ -146,6 +165,23 @@ final class PlaceholderReachabilityService: ReachabilityServiceProtocol, @unchec
     var isExpensive: Bool { false }
     func start() { /* no-op */ }
     func stop() { /* no-op */ }
+}
+
+/// Placeholder audio recorder -- no-op for testing and initial launch.
+final class PlaceholderAudioRecorder: AudioRecorderProtocol, @unchecked Sendable {
+    func startRecording(flightID: UUID, profile: AudioQualityProfile, outputURL: URL) async throws {}
+    func stopRecording() async -> URL? { nil }
+    func pauseRecording() async {}
+    func resumeRecording() async throws {}
+    var isRecording: Bool { false }
+    var audioLevel: Float { -160 }  // dBFS silence floor
+}
+
+/// Placeholder transcription service -- no-op for testing and initial launch.
+final class PlaceholderTranscriptionService: TranscriptionServiceProtocol, @unchecked Sendable {
+    func startTranscription(flightID: UUID) async throws {}
+    func stopTranscription() async {}
+    var isTranscribing: Bool { false }
 }
 
 // MARK: - Placeholder Error

@@ -257,6 +257,65 @@ enum CurrencyStatus: String, Codable, CaseIterable, Sendable {
     case expired    // red: past expiration
 }
 
+// MARK: - Recording Types
+
+/// Recording lifecycle state.
+enum RecordingStatus: Equatable, Sendable {
+    case idle
+    case countdown(remaining: Int)   // auto-start 3-second countdown
+    case recording
+    case paused
+    case stopping
+}
+
+/// Flight phase detected by speed + altitude state machine.
+/// Raw String values for GRDB storage.
+enum FlightPhaseType: String, Codable, CaseIterable, Sendable {
+    case preflight
+    case taxi
+    case takeoff
+    case departure
+    case cruise
+    case approach
+    case landing
+    case postflight
+}
+
+/// Audio recording quality profile per user decision D-01 (two profiles, Standard default).
+enum AudioQualityProfile: String, Codable, CaseIterable, Sendable {
+    case standard   // 16kHz, 32kbps AAC (~14 MB/hr)
+    case high       // 22kHz, 64kbps AAC (~28 MB/hr)
+
+    var sampleRate: Double {
+        switch self {
+        case .standard: return 16_000
+        case .high: return 22_050
+        }
+    }
+
+    var bitRate: Int {
+        switch self {
+        case .standard: return 32_000
+        case .high: return 64_000
+        }
+    }
+
+    var estimatedMBPerHour: Double {
+        switch self {
+        case .standard: return 14
+        case .high: return 28
+        }
+    }
+}
+
+/// Reason for a gap in the audio recording (interruption).
+enum InterruptionGapReason: Codable, Sendable, Equatable {
+    case phoneCall
+    case siri
+    case headphoneDisconnect
+    case other(String)
+}
+
 // MARK: - Airspace Geometry
 
 enum AirspaceGeometry: Codable, Equatable, Sendable {
