@@ -23,39 +23,43 @@ struct ContentView: View {
     var body: some View {
         @Bindable var appState = appState
 
-        TabView(selection: $appState.selectedTab) {
-            Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
-                MapContainerView()
-            }
+        VStack(spacing: 0) {
+            BetaBanner()
 
-            Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
-                FlightsTabView()
-            }
+            TabView(selection: $appState.selectedTab) {
+                Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
+                    MapContainerView()
+                }
 
-            Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
-                LogbookListView()
-            }
-            .badge(unconfirmedLogbookCount)
+                Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
+                    FlightsTabView()
+                }
 
-            Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
-                AircraftListView()
-            }
-            .badge(currencyBadgeCount)
+                Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
+                    LogbookListView()
+                }
+                .badge(unconfirmedLogbookCount)
 
-            Tab(AppTab.settings.title, systemImage: AppTab.settings.systemImage, value: .settings) {
-                Text("Settings Placeholder")
+                Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
+                    AircraftListView()
+                }
+                .badge(currencyBadgeCount)
+
+                Tab(AppTab.settings.title, systemImage: AppTab.settings.systemImage, value: .settings) {
+                    SettingsView()
+                }
             }
-        }
-        .onAppear {
-            updateCurrencyBadge()
-            updateLogbookBadge()
-        }
-        .onChange(of: appState.activePilotProfileID) { _, _ in
-            updateCurrencyBadge()
-        }
-        .onChange(of: appState.selectedTab) { _, _ in
-            updateLogbookBadge()
-            updateCurrencyBadge()
+            .onAppear {
+                updateCurrencyBadge()
+                updateLogbookBadge()
+            }
+            .onChange(of: appState.activePilotProfileID) { _, _ in
+                updateCurrencyBadge()
+            }
+            .onChange(of: appState.selectedTab) { _, _ in
+                updateLogbookBadge()
+                updateCurrencyBadge()
+            }
         }
     }
 

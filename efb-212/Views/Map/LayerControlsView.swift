@@ -30,6 +30,19 @@ struct LayerControlsView: View {
             layerToggle(layer: .airspace, label: "Airspace", tint: .orange)
             tfrToggle()
             layerToggle(layer: .weatherDots, label: "Weather", tint: .green)
+
+            // Weather data age badge (per user decision: staleness on every weather surface)
+            if appState.visibleLayers.contains(.weatherDots),
+               let oldestObs = mapViewModel.oldestWeatherObservationTime {
+                HStack(spacing: 4) {
+                    Text("Data age:")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    WeatherBadge(observationTime: oldestObs)
+                }
+                .padding(.leading, 52)  // Indent under toggle
+            }
+
             layerToggle(layer: .navaids, label: "Navaids", tint: .purple)
 
             Divider()
