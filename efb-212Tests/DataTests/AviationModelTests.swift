@@ -158,11 +158,11 @@ struct AviationModelTests {
     @Test func weatherCacheDefaults() {
         let cache = WeatherCache(stationID: "KPAO")
         #expect(cache.stationID == "KPAO")
-        #expect(cache.metar == nil)
-        #expect(cache.taf == nil)
+        #expect(cache.rawMETAR == nil)
+        #expect(cache.rawTAF == nil)
         #expect(cache.flightCategory == .vfr)   // default
         #expect(cache.temperature == nil)
-        #expect(cache.wind == nil)
+        #expect(cache.windDirection == nil)
     }
 
     // MARK: - FlightCategory Tests

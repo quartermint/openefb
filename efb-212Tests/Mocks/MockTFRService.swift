@@ -14,7 +14,15 @@ final class MockTFRService: TFRServiceProtocol, @unchecked Sendable {
     var shouldFail: Bool = false
     var fetchCallCount: Int = 0
 
-    func fetchActiveTFRs(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [TFR] {
+    func fetchTFRs(near coordinate: CLLocationCoordinate2D, radiusNM: Double) async throws -> [TFR] {
+        fetchCallCount += 1
+        if shouldFail {
+            throw EFBError.tfrFetchFailed(underlying: NSError(domain: "test", code: -1))
+        }
+        return mockTFRs
+    }
+
+    func activeTFRs() async throws -> [TFR] {
         fetchCallCount += 1
         if shouldFail {
             throw EFBError.tfrFetchFailed(underlying: NSError(domain: "test", code: -1))

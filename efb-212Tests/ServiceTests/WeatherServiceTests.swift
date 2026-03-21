@@ -28,11 +28,12 @@ struct WeatherServiceTests {
         category: FlightCategory = .vfr,
         fetchedAt: Date = Date()
     ) -> WeatherCache {
-        WeatherCache(
+        let visStr: String? = visibility.map { String($0) }
+        return WeatherCache(
             stationID: stationID,
-            flightCategory: category,
-            visibility: visibility,
+            visibility: visStr,
             ceiling: ceiling,
+            flightCategory: category,
             fetchedAt: fetchedAt
         )
     }
@@ -78,7 +79,7 @@ struct WeatherServiceTests {
         let weather = Self.makeWeather(ceiling: 5000, visibility: 10.0, category: .vfr)
         #expect(weather.flightCategory == .vfr)
         #expect(weather.ceiling! > 3000)
-        #expect(weather.visibility! > 5.0)
+        #expect(weather.visibility == "10.0")
     }
 
     @Test func mvfrCeiling() {
@@ -92,7 +93,7 @@ struct WeatherServiceTests {
         // Visibility 3-5 SM triggers MVFR
         let weather = Self.makeWeather(ceiling: 5000, visibility: 4.0, category: .mvfr)
         #expect(weather.flightCategory == .mvfr)
-        #expect(weather.visibility! >= 3.0 && weather.visibility! <= 5.0)
+        #expect(weather.visibility == "4.0")
     }
 
     @Test func ifrCeiling() {
@@ -106,7 +107,7 @@ struct WeatherServiceTests {
         // Visibility 1-3 SM triggers IFR
         let weather = Self.makeWeather(ceiling: 5000, visibility: 2.0, category: .ifr)
         #expect(weather.flightCategory == .ifr)
-        #expect(weather.visibility! >= 1.0 && weather.visibility! < 3.0)
+        #expect(weather.visibility == "2.0")
     }
 
     @Test func lifrCeiling() {
@@ -120,7 +121,7 @@ struct WeatherServiceTests {
         // Visibility < 1 SM triggers LIFR
         let weather = Self.makeWeather(ceiling: 5000, visibility: 0.5, category: .lifr)
         #expect(weather.flightCategory == .lifr)
-        #expect(weather.visibility! < 1.0)
+        #expect(weather.visibility == "0.5")
     }
 
     // MARK: - WeatherCache Staleness Tests
@@ -159,12 +160,12 @@ struct WeatherServiceTests {
     @Test func weatherCacheDefaults() {
         let cache = WeatherCache(stationID: "KPAO")
         #expect(cache.stationID == "KPAO")
-        #expect(cache.metar == nil)
-        #expect(cache.taf == nil)
+        #expect(cache.rawMETAR == nil)
+        #expect(cache.rawTAF == nil)
         #expect(cache.flightCategory == .vfr)
         #expect(cache.temperature == nil)
         #expect(cache.dewpoint == nil)
-        #expect(cache.wind == nil)
+        #expect(cache.windDirection == nil)
         #expect(cache.visibility == nil)
         #expect(cache.ceiling == nil)
         #expect(cache.observationTime == nil)
