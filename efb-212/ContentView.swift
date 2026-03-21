@@ -16,7 +16,7 @@ struct ContentView: View {
 
         TabView(selection: $appState.selectedTab) {
             Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
-                Text("Map View Placeholder")
+                MapContainerView()
             }
 
             Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
