@@ -16,6 +16,7 @@ struct efb_212App: App {
         WindowGroup {
             ContentView()
                 .environment(appState)
+                .modelContainer(for: SchemaV1.UserSettings.self)
         }
     }
 }
