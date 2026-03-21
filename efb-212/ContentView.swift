@@ -30,7 +30,7 @@ struct ContentView: View {
             }
 
             Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
-                Text("Logbook Placeholder")
+                LogbookListView()
             }
 
             Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
