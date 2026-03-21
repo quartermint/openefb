@@ -19,10 +19,10 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 ### Aviation Data
 
-- [ ] **DATA-01**: App contains 20,000+ US airports from FAA NASR data queryable by spatial proximity (R-tree)
-- [ ] **DATA-02**: Pilot can tap any airport to see info sheet: runways (length/width/surface), frequencies, elevation, weather, remarks
-- [ ] **DATA-03**: Pilot can search airports and navaids by ICAO identifier, name, or city
-- [ ] **DATA-04**: Pilot sees Class B, C, D airspace boundaries rendered on the map with floor/ceiling labels
+- [x] **DATA-01**: App contains 20,000+ US airports from FAA NASR data queryable by spatial proximity (R-tree)
+- [x] **DATA-02**: Pilot can tap any airport to see info sheet: runways (length/width/surface), frequencies, elevation, weather, remarks
+- [x] **DATA-03**: Pilot can search airports and navaids by ICAO identifier, name, or city
+- [x] **DATA-04**: Pilot sees Class B, C, D airspace boundaries rendered on the map with floor/ceiling labels
 - [ ] **DATA-05**: App displays live TFR polygons from FAA data on the map
 - [ ] **DATA-06**: App alerts pilot when approaching Class B/C/D airspace or active TFR
 
@@ -120,10 +120,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NAV-05 | Phase 1 | Pending |
 | NAV-06 | Phase 1 | Pending |
 | NAV-07 | Phase 1 | Complete |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
 | DATA-05 | Phase 1 | Pending |
 | DATA-06 | Phase 1 | Pending |
 | WX-01 | Phase 1 | Pending |

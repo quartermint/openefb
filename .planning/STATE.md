@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-01-PLAN.md (foundation types, models, protocols, AppState, SwiftData)
-last_updated: "2026-03-21T01:42:36.375Z"
+stopped_at: Completed 01-02-PLAN.md (aviation database, GRDB wrapper, NASR importer)
+last_updated: "2026-03-21T02:08:50.015Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 01 (foundation-navigation-core) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 6
 
 *Updated after each plan completion*
 | Phase 01 P01 | 16min | 2 tasks | 11 files |
+| Phase 01 P02 | 14min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Used @Observable macro (not ObservableObject) for AppState root state coordinator
 - [Phase 01]: Archived 49 old ObservableObject files to _archive/ (outside build), preserving as reference
 - [Phase 01]: Info.plist at project root to avoid PBXFileSystemSynchronizedRootGroup conflict
+- [Phase 01]: AviationDatabase uses DatabasePool (not DatabaseQueue) for concurrent reads with WAL mode
+- [Phase 01]: Seed database (522 airports) for Phase 1; full 20K NASR import deferred to future iteration
+- [Phase 01]: Copy-on-first-launch to Application Support/efb-212/ subdirectory for write access
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T01:42:36.354Z
-Stopped at: Completed 01-01-PLAN.md (foundation types, models, protocols, AppState, SwiftData)
+Last session: 2026-03-21T02:08:49.955Z
+Stopped at: Completed 01-02-PLAN.md (aviation database, GRDB wrapper, NASR importer)
 Resume file: None
