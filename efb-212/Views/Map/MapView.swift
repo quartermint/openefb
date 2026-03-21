@@ -63,8 +63,9 @@ struct MapView: UIViewRepresentable {
             let heading = mapViewModel.appState.track
             mapService.updateOwnship(location: position, heading: heading)
 
-            // Handle first location animation
-            if mapViewModel.appState.firstLocationReceived {
+            // Handle first location animation (fire once only via Coordinator flag)
+            if mapViewModel.appState.firstLocationReceived && !context.coordinator.hasCalledFirstLocation {
+                context.coordinator.hasCalledFirstLocation = true
                 mapViewModel.onFirstLocationReceived(location: position)
             }
         }
@@ -84,6 +85,10 @@ struct MapView: UIViewRepresentable {
     nonisolated class Coordinator: NSObject, MLNMapViewDelegate {
         let mapViewModel: MapViewModel
         let mapService: MapService
+
+        /// Tracks whether onFirstLocationReceived has been called this map lifecycle.
+        /// Prevents wasteful repeated calls on every SwiftUI update cycle.
+        var hasCalledFirstLocation: Bool = false
 
         init(mapViewModel: MapViewModel, mapService: MapService) {
             self.mapViewModel = mapViewModel
