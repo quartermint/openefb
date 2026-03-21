@@ -71,7 +71,7 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 - [x] **INFRA-02**: App monitors network reachability and clearly indicates when operating with cached/stale data
 - [x] **INFRA-03**: Chart tiles are served from CDN with 56-day FAA cycle expiration metadata; app warns when charts are expired
 - [ ] **INFRA-04**: App includes privacy manifest compliant with App Store requirements
-- [ ] **INFRA-05**: App is distributed via public TestFlight
+- [x] **INFRA-05**: App is distributed via public TestFlight
 
 ## v2 Requirements
 
@@ -151,7 +151,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 | INFRA-04 | Phase 6 | Pending |
-| INFRA-05 | Phase 6 | Pending |
+| INFRA-05 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 39 total

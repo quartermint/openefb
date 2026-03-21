@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 05-02-PLAN.md (Track Replay UI + Flights tab wiring)
-last_updated: "2026-03-21T18:10:26.794Z"
+stopped_at: Completed 06-02-PLAN.md (Settings + Beta Banner + Weather Age)
+last_updated: "2026-03-21T20:21:57.087Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 21
+  completed_plans: 19
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** A pilot can install the app, fly with it as their primary EFB, record their flight, and get an AI debrief afterward — all free, all on-device, no account required.
-**Current focus:** Phase 05 — Track Replay
+**Current focus:** Phase 06 — polish-testflight
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
+Phase: 06 (polish-testflight) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Plan: Not started
 | Phase 04 P03 | 7min | 2 tasks | 9 files |
 | Phase 05 P01 | 68min | 2 tasks | 4 files |
 | Phase 05 P02 | 5min | 3 tasks | 9 files |
+| Phase 06 P02 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,8 @@ Recent decisions affecting current work:
 - [Phase 05]: VStack segmented picker above FlightPlanView/FlightHistoryListView to avoid nested NavigationStack conflict
 - [Phase 05]: Separate MLNMapView instance for ReplayMapView to prevent replay layers polluting live navigation map
 - [Phase 05]: Exposed trackPoints/transcriptSegments as private(set) on ReplayEngine for UI view access
+- [Phase 06]: @AppStorage for beta banner dismissal instead of SwiftData -- simpler for single boolean flag
+- [Phase 06]: Weather age badge in LayerControlsView under Weather toggle -- map GeoJSON dots cannot host SwiftUI views
 
 ### Pending Todos
 
@@ -141,6 +144,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T18:06:13.371Z
-Stopped at: Completed 05-02-PLAN.md (Track Replay UI + Flights tab wiring)
+Last session: 2026-03-21T20:21:57.081Z
+Stopped at: Completed 06-02-PLAN.md (Settings + Beta Banner + Weather Age)
 Resume file: None

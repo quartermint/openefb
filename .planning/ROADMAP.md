@@ -117,7 +117,7 @@ Plans:
 
 Plans:
 - [ ] 06-01-PLAN.md — Privacy manifest: PrivacyInfo.xcprivacy with location, audio, UserDefaults declarations + automated validation tests
-- [ ] 06-02-PLAN.md — Settings view, beta banner, weather staleness expansion: replace Settings placeholder, add dismissable beta disclaimer, add weather age indicator to LayerControlsView
+- [x] 06-02-PLAN.md — Settings view, beta banner, weather staleness expansion: replace Settings placeholder, add dismissable beta disclaimer, add weather age indicator to LayerControlsView
 - [ ] 06-03-PLAN.md — Onboarding + TestFlight prep: 3-screen first-time walkthrough, app entry point gate, human verification of integrated flow
 
 ## Progress
