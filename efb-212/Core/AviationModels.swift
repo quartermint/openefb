@@ -3,8 +3,12 @@
 //  efb-212
 //
 //  Shared aviation data structures used across the app.
-//  Airport/Runway/Frequency/Navaid are used with GRDB for aviation database.
+//  Airport/Runway/Frequency/Navaid/Airspace are used with GRDB for aviation database.
 //  FlightPlan/Waypoint/WeatherCache/ChartRegion are used across services and views.
+//
+//  All structs use nonisolated init for GRDB FetchableRecord compatibility.
+//  GRDB conformances (FetchableRecord, PersistableRecord, TableRecord) are declared
+//  here but GRDB import is deferred to the database layer to avoid coupling.
 //
 
 import Foundation
@@ -17,13 +21,13 @@ struct Airport: Identifiable, Codable, Equatable, Hashable, Sendable {
     let icao: String                     // ICAO identifier (e.g., "KPAO")
     let faaID: String?                   // FAA LID if different (e.g., "PAO")
     let name: String                     // "Palo Alto"
-    let latitude: Double
-    let longitude: Double
+    let latitude: Double                 // degrees
+    let longitude: Double                // degrees
     let elevation: Double                // feet MSL
     let type: AirportType
     let ownership: OwnershipType
     let ctafFrequency: Double?           // MHz
-    let unicomFrequency: Double?
+    let unicomFrequency: Double?         // MHz
     let artccID: String?                 // Controlling ARTCC
     let fssID: String?                   // Flight service station
     let magneticVariation: Double?       // degrees (W negative)
@@ -96,12 +100,12 @@ struct Runway: Identifiable, Codable, Equatable, Sendable {
     let lighting: LightingType
     let baseEndID: String                // "13"
     let reciprocalEndID: String          // "31"
-    let baseEndLatitude: Double
-    let baseEndLongitude: Double
-    let reciprocalEndLatitude: Double
-    let reciprocalEndLongitude: Double
+    let baseEndLatitude: Double          // degrees
+    let baseEndLongitude: Double         // degrees
+    let reciprocalEndLatitude: Double    // degrees
+    let reciprocalEndLongitude: Double   // degrees
     let baseEndElevation: Double?        // feet MSL (TDZE)
-    let reciprocalEndElevation: Double?
+    let reciprocalEndElevation: Double?  // feet MSL (TDZE)
 
     nonisolated init(
         id: String, length: Int, width: Int,
@@ -145,14 +149,14 @@ struct Frequency: Identifiable, Codable, Equatable, Sendable {
 
 // MARK: - Navaid
 
-struct Navaid: Identifiable, Codable, Equatable, Sendable {
+struct Navaid: Identifiable, Codable, Equatable, Hashable, Sendable {
     let id: String                       // e.g., "SJC"
     let name: String                     // "San Jose"
     let type: NavaidType
-    let latitude: Double
-    let longitude: Double
+    let latitude: Double                 // degrees
+    let longitude: Double                // degrees
     let frequency: Double                // MHz (VOR) or kHz (NDB)
-    let magneticVariation: Double?
+    let magneticVariation: Double?       // degrees (W negative)
     let elevation: Double?               // feet MSL
 
     nonisolated init(
@@ -262,7 +266,7 @@ struct TFR: Identifiable, Codable, Equatable, Sendable {
 
 // MARK: - Flight Plan
 
-struct FlightPlan: Identifiable, Codable, Equatable {
+struct FlightPlan: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     var name: String?
     var departure: String                // ICAO
@@ -277,7 +281,7 @@ struct FlightPlan: Identifiable, Codable, Equatable {
     var createdAt: Date
     var notes: String?
 
-    init(
+    nonisolated init(
         id: UUID = UUID(),
         name: String? = nil,
         departure: String,
@@ -310,12 +314,12 @@ struct FlightPlan: Identifiable, Codable, Equatable {
 
 // MARK: - Waypoint
 
-struct Waypoint: Identifiable, Codable, Equatable {
+struct Waypoint: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     var identifier: String               // ICAO, navaid ID, or lat/lon
     var name: String
-    var latitude: Double
-    var longitude: Double
+    var latitude: Double                 // degrees
+    var longitude: Double                // degrees
     var altitude: Int?                   // feet MSL (optional per-waypoint)
     var type: WaypointType
 
@@ -323,7 +327,7 @@ struct Waypoint: Identifiable, Codable, Equatable {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
-    init(
+    nonisolated init(
         id: UUID = UUID(),
         identifier: String,
         name: String,
@@ -347,59 +351,65 @@ struct Waypoint: Identifiable, Codable, Equatable {
 struct WeatherCache: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     var stationID: String                // ICAO (e.g., "KPAO")
-    var metar: String?                   // Raw METAR text
-    var taf: String?                     // Raw TAF text
-    var flightCategory: FlightCategory
+    var rawMETAR: String?                // Raw METAR text
+    var rawTAF: String?                  // Raw TAF text
     var temperature: Double?             // Celsius
     var dewpoint: Double?                // Celsius
-    var wind: WindInfo?
-    var visibility: Double?              // statute miles
+    var windDirection: Int?              // degrees true
+    var windSpeed: Int?                  // knots
+    var windGust: Int?                   // knots
+    var visibility: String?              // statute miles (string to handle "10+" etc.)
     var ceiling: Int?                    // feet AGL
-    var fetchedAt: Date                  // When data was retrieved
+    var flightCategory: FlightCategory
     var observationTime: Date?           // When observation was taken
+    var fetchedAt: Date                  // When data was retrieved
 
-    /// Age of the weather data in seconds
+    /// Age of the weather data in seconds since fetch.
     nonisolated var age: TimeInterval {
         Date().timeIntervalSince(fetchedAt)
     }
 
-    /// Whether data is considered stale (> 60 minutes from fetch)
+    /// Whether data is considered stale (> 60 minutes from fetch).
     nonisolated var isStale: Bool {
-        age > 3600
+        age > 3600  // 60 minutes
     }
 
     nonisolated init(
         id: UUID = UUID(),
         stationID: String,
-        metar: String? = nil,
-        taf: String? = nil,
-        flightCategory: FlightCategory = .vfr,
+        rawMETAR: String? = nil,
+        rawTAF: String? = nil,
         temperature: Double? = nil,
         dewpoint: Double? = nil,
-        wind: WindInfo? = nil,
-        visibility: Double? = nil,
+        windDirection: Int? = nil,
+        windSpeed: Int? = nil,
+        windGust: Int? = nil,
+        visibility: String? = nil,
         ceiling: Int? = nil,
-        fetchedAt: Date = Date(),
-        observationTime: Date? = nil
+        flightCategory: FlightCategory = .vfr,
+        observationTime: Date? = nil,
+        fetchedAt: Date = Date()
     ) {
         self.id = id
         self.stationID = stationID
-        self.metar = metar
-        self.taf = taf
-        self.flightCategory = flightCategory
+        self.rawMETAR = rawMETAR
+        self.rawTAF = rawTAF
         self.temperature = temperature
         self.dewpoint = dewpoint
-        self.wind = wind
+        self.windDirection = windDirection
+        self.windSpeed = windSpeed
+        self.windGust = windGust
         self.visibility = visibility
         self.ceiling = ceiling
-        self.fetchedAt = fetchedAt
+        self.flightCategory = flightCategory
         self.observationTime = observationTime
+        self.fetchedAt = fetchedAt
     }
 }
 
 // MARK: - Chart Region
 
-struct ChartRegion: Identifiable, Codable, Equatable {
+struct ChartRegion: Identifiable, Codable, Equatable, Sendable {
     let id: String                       // e.g., "San_Francisco"
     let name: String                     // "San Francisco"
     let effectiveDate: Date
@@ -411,5 +421,25 @@ struct ChartRegion: Identifiable, Codable, Equatable {
 
     var isExpired: Bool {
         expirationDate < Date()
+    }
+
+    nonisolated init(
+        id: String,
+        name: String,
+        effectiveDate: Date,
+        expirationDate: Date,
+        boundingBox: BoundingBox,
+        fileSizeMB: Double,
+        isDownloaded: Bool = false,
+        localPath: URL? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.effectiveDate = effectiveDate
+        self.expirationDate = expirationDate
+        self.boundingBox = boundingBox
+        self.fileSizeMB = fileSizeMB
+        self.isDownloaded = isDownloaded
+        self.localPath = localPath
     }
 }

@@ -53,15 +53,30 @@ extension Date {
         return calendar.date(from: components)
     }
 
-    /// Time ago description (e.g., "5 min ago", "2 hrs ago")
+    /// Relative time description matching UI-SPEC copywriting.
+    /// Format: "<1 min" / "15 min" / "1h 30m" / "2h" / "1d"
     var timeAgoShort: String {
         let interval = Date().timeIntervalSince(self)
-        let minutes = Int(interval / 60)
-        if minutes < 1 { return "just now" }
-        if minutes < 60 { return "\(minutes) min ago" }
-        let hours = minutes / 60
-        if hours < 24 { return "\(hours) hr\(hours == 1 ? "" : "s") ago" }
+        let totalMinutes = Int(interval / 60)
+
+        if totalMinutes < 1 {
+            return "<1 min"
+        }
+        if totalMinutes < 60 {
+            return "\(totalMinutes) min"
+        }
+
+        let hours = totalMinutes / 60
+        let remainingMinutes = totalMinutes % 60
+
+        if hours < 24 {
+            if remainingMinutes == 0 {
+                return "\(hours)h"
+            }
+            return "\(hours)h \(remainingMinutes)m"
+        }
+
         let days = hours / 24
-        return "\(days) day\(days == 1 ? "" : "s") ago"
+        return "\(days)d"
     }
 }

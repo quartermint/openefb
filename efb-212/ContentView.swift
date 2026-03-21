@@ -2,268 +2,43 @@
 //  ContentView.swift
 //  efb-212
 //
-//  Root view — TabView with 5 main app tabs.
-//  Map tab shows the full moving map with instrument strip and layer controls.
-//  Flights tab shows flight history with manual entry.
-//  Logbook tab shows traditional pilot logbook format.
-//  Aircraft tab shows pilot and aircraft profile management.
-//  Settings tab shows app settings and chart management.
+//  Root view -- 5-tab TabView shell.
+//  Each tab will be populated with real views in later plans.
 //
 
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var appState: AppState
-    @State private var selectedTab: AppTab = .map
-
-    // Map dependencies — created once for the map tab
-    @State private var mapService = MapService()
-    @State private var mapViewModel: MapViewModel?
-    @State private var chartManager = ChartManager()
-    @State private var tfrService = TFRService()
-
-    // Flight planning
-    @State private var flightPlanViewModel: FlightPlanViewModel?
-    @State private var weatherViewModel: WeatherViewModel?
-    @State private var showFlightPlan: Bool = false
-
-    // Nearest airport (emergency feature)
-    @State private var nearestAirportViewModel: NearestAirportViewModel?
-    @State private var showNearestAirport: Bool = false
-
-    // Chart state
-    @State private var hasDownloadedCharts: Bool = false
+    @Environment(AppState.self) private var appState
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        @Bindable var appState = appState
+
+        TabView(selection: $appState.selectedTab) {
             Tab(AppTab.map.title, systemImage: AppTab.map.systemImage, value: .map) {
-                mapTab
+                Text("Map View Placeholder")
             }
 
             Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
-                NavigationStack {
-                    FlightListView()
-                }
+                Text("Flights Placeholder")
             }
 
             Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
-                NavigationStack {
-                    LogbookView()
-                }
+                Text("Logbook Placeholder")
             }
 
             Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
-                aircraftTab
+                Text("Aircraft Placeholder")
             }
 
             Tab(AppTab.settings.title, systemImage: AppTab.settings.systemImage, value: .settings) {
-                NavigationStack {
-                    SettingsView()
-                }
+                Text("Settings Placeholder")
             }
-        }
-        .onAppear {
-            if mapViewModel == nil {
-                mapViewModel = MapViewModel(
-                    databaseManager: appState.databaseManager,
-                    mapService: mapService,
-                    locationManager: appState.locationManager,
-                    weatherService: appState.weatherService,
-                    tfrService: tfrService,
-                    appState: appState
-                )
-            }
-            if flightPlanViewModel == nil {
-                flightPlanViewModel = FlightPlanViewModel(
-                    databaseManager: appState.databaseManager
-                )
-            }
-            if weatherViewModel == nil {
-                weatherViewModel = WeatherViewModel(
-                    weatherService: appState.weatherService
-                )
-            }
-            if nearestAirportViewModel == nil {
-                nearestAirportViewModel = NearestAirportViewModel(
-                    databaseManager: appState.databaseManager,
-                    locationManager: appState.locationManager
-                )
-            }
-        }
-        .sheet(isPresented: $appState.isPresentingAirportInfo) {
-            if let airportID = appState.selectedAirportID,
-               let airport = mapViewModel?.selectedAirport, airport.icao == airportID {
-                let weather = weatherViewModel?.weatherData[airportID]
-                AirportInfoSheet(airport: airport, weather: weather, weatherViewModel: weatherViewModel)
-            }
-        }
-        .sheet(isPresented: $showFlightPlan) {
-            if let fpvm = flightPlanViewModel, let wvm = weatherViewModel {
-                FlightPlanView(viewModel: fpvm, weatherViewModel: wvm)
-            }
-        }
-        .sheet(isPresented: $showNearestAirport) {
-            if let navm = nearestAirportViewModel {
-                NearestAirportView(viewModel: navm, weatherViewModel: weatherViewModel)
-            }
-        }
-        .onChange(of: flightPlanViewModel?.activePlan) {
-            // Sync flight plan to AppState for InstrumentStrip DTG/ETE
-            appState.activeFlightPlan = flightPlanViewModel?.activePlan
-            if let plan = flightPlanViewModel?.activePlan {
-                appState.distanceToNext = plan.totalDistance
-                appState.estimatedTimeEnroute = plan.estimatedTime
-                // Render route line on map
-                mapService.showRoute(waypoints: plan.waypoints)
-            } else {
-                appState.distanceToNext = nil
-                appState.estimatedTimeEnroute = nil
-                mapService.clearRoute()
-            }
-        }
-    }
-
-    // MARK: - Map Tab
-
-    @ViewBuilder
-    private var mapTab: some View {
-        ZStack(alignment: .bottom) {
-            // Map fills the entire space
-            MapView(mapService: mapService)
-                .ignoresSafeArea(edges: .top)
-
-            // Floating controls
-            VStack(spacing: 0) {
-                // TFR sample data disclaimer — safety-critical, non-dismissable
-                if appState.visibleLayers.contains(.tfrs) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                        Text("TFR DATA IS SAMPLE ONLY — NOT FOR NAVIGATION")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(.red)
-                }
-
-                HStack {
-                    // Flight plan button (top-left)
-                    Button {
-                        showFlightPlan = true
-                    } label: {
-                        Image(systemName: "paperplane.fill")
-                            .font(.title3)
-                            .padding(10)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                    }
-                    .padding(.leading, 16)
-                    .padding(.top, appState.visibleLayers.contains(.tfrs) ? 8 : 60)
-
-                    // Nearest airport button — emergency/safety feature
-                    Button {
-                        showNearestAirport = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.caption)
-                            Text("NEAREST")
-                                .font(.caption)
-                                .fontWeight(.black)
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(.red)
-                        .clipShape(Capsule())
-                    }
-                    .padding(.top, appState.visibleLayers.contains(.tfrs) ? 8 : 60)
-
-                    Spacer()
-
-                    // Layer controls (top-right)
-                    LayerControlsView(mapService: mapService)
-                        .padding(.trailing, 16)
-                        .padding(.top, appState.visibleLayers.contains(.tfrs) ? 8 : 60)
-                }
-                Spacer()
-            }
-
-            // Nearest airport indicator + Instrument strip at bottom
-            VStack(spacing: 6) {
-                // "No charts downloaded" indicator
-                if appState.visibleLayers.contains(.sectional) && !hasDownloadedCharts {
-                    Button {
-                        selectedTab = .settings
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "map")
-                                .font(.caption)
-                            Text("No VFR charts downloaded")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                            Image(systemName: "chevron.right")
-                                .font(.caption2)
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.orange)
-                        .clipShape(Capsule())
-                    }
-                }
-
-                // Nearest airport HUD
-                if let nearest = mapViewModel?.nearestAirport {
-                    NearestAirportHUD(
-                        airport: nearest,
-                        ownshipPosition: appState.ownshipPosition
-                    )
-                }
-
-                InstrumentStripView()
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
-        }
-        .task {
-            await mapService.loadDownloadedSectionals(from: chartManager)
-            let paths = await chartManager.downloadedChartPaths()
-            hasDownloadedCharts = !paths.isEmpty
-        }
-        .onChange(of: appState.sectionalOpacity) { _, newOpacity in
-            mapService.setSectionalOpacity(newOpacity)
-        }
-    }
-
-    // MARK: - Aircraft Tab
-
-    @ViewBuilder
-    private var aircraftTab: some View {
-        NavigationStack {
-            List {
-                NavigationLink("Aircraft Profiles") {
-                    AircraftProfileView()
-                }
-                NavigationLink("Pilot Profile") {
-                    PilotProfileView()
-                }
-            }
-            .navigationTitle("Aircraft & Pilot")
         }
     }
 }
 
 #Preview {
     ContentView()
-        .environmentObject(
-            AppState(
-                locationManager: PlaceholderLocationManager(),
-                databaseManager: PlaceholderDatabaseManager(),
-                weatherService: PlaceholderWeatherService()
-            )
-        )
+        .environment(AppState())
 }
