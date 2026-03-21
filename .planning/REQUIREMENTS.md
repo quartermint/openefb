@@ -49,9 +49,9 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 ### AI Debrief
 
-- [ ] **DEBRIEF-01**: After flight, app generates structured debrief on-device via Apple Foundation Models: narrative summary, per-phase observations, improvements, overall rating
-- [ ] **DEBRIEF-02**: Flight data is compressed into a summary under 3,000 tokens before debrief generation (4,096 context window constraint)
-- [ ] **DEBRIEF-03**: App gracefully degrades when Foundation Models is unavailable (unsupported device, Apple Intelligence disabled) with clear user messaging
+- [x] **DEBRIEF-01**: After flight, app generates structured debrief on-device via Apple Foundation Models: narrative summary, per-phase observations, improvements, overall rating
+- [x] **DEBRIEF-02**: Flight data is compressed into a summary under 3,000 tokens before debrief generation (4,096 context window constraint)
+- [x] **DEBRIEF-03**: App gracefully degrades when Foundation Models is unavailable (unsupported device, Apple Intelligence disabled) with clear user messaging
 
 ### Logbook & Currency
 
@@ -138,9 +138,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REC-03 | Phase 3 | Complete |
 | REC-04 | Phase 3 | Pending |
 | REC-05 | Phase 3 | Complete |
-| DEBRIEF-01 | Phase 4 | Pending |
-| DEBRIEF-02 | Phase 4 | Pending |
-| DEBRIEF-03 | Phase 4 | Pending |
+| DEBRIEF-01 | Phase 4 | Complete |
+| DEBRIEF-02 | Phase 4 | Complete |
+| DEBRIEF-03 | Phase 4 | Complete |
 | LOG-01 | Phase 4 | Complete |
 | LOG-02 | Phase 4 | Complete |
 | LOG-03 | Phase 4 | Pending |

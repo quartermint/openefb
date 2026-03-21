@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-02-PLAN.md (LogbookEntry model, views, RecordingViewModel wiring)
-last_updated: "2026-03-21T16:05:03.067Z"
+stopped_at: "Completed 04-01-PLAN.md (AI debrief data pipeline: FlightSummaryBuilder, @Generable FlightDebrief, DebriefEngine, GRDB migration)"
+last_updated: "2026-03-21T16:08:01.179Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 04 (AI Debrief + Logbook) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Plan: 2 of 3
 | Phase 03 P01 | 17min | 2 tasks | 16 files |
 | Phase 03 P02 | 12min | 2 tasks | 4 files |
 | Phase 04 P02 | 45min | 2 tasks | 9 files |
+| Phase 04 P01 | 48min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,10 @@ Recent decisions affecting current work:
 - [Phase 04]: nonisolated static for pure-function duration formatting on @MainActor LogbookViewModel
 - [Phase 04]: RecordingViewModel uses optional logbookViewModel/modelContext injection for loose coupling
 - [Phase 04]: Confirmed logbook entries open in read-only mode (isConfirmed controls navigation behavior)
+- [Phase 04]: PhaseObservation Codable conformance added for JSON encoding in DebriefRecord
+- [Phase 04]: Delete-then-insert for debrief regeneration overwrite (GRDB INSERT OR REPLACE only works on primary key)
+- [Phase 04]: Raw SQL for debrief insert to match existing RecordingDatabase UUID-as-string encoding pattern
+- [Phase 04]: Temp files for GRDB test databases (DatabasePool requires real file paths, not :memory:)
 
 ### Pending Todos
 
@@ -123,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T16:05:02.987Z
-Stopped at: Completed 04-02-PLAN.md (LogbookEntry model, views, RecordingViewModel wiring)
+Last session: 2026-03-21T16:08:01.177Z
+Stopped at: Completed 04-01-PLAN.md (AI debrief data pipeline: FlightSummaryBuilder, @Generable FlightDebrief, DebriefEngine, GRDB migration)
 Resume file: None
