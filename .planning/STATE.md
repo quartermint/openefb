@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 05-01-PLAN.md (ReplayEngine + MapService replay layers)
-last_updated: "2026-03-21T17:57:50.858Z"
+stopped_at: Completed 05-02-PLAN.md (Track Replay UI + Flights tab wiring)
+last_updated: "2026-03-21T18:06:13.373Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -62,6 +62,7 @@ Plan: 2 of 2
 | Phase 04 P01 | 48min | 3 tasks | 9 files |
 | Phase 04 P03 | 7min | 2 tasks | 9 files |
 | Phase 05 P01 | 68min | 2 tasks | 4 files |
+| Phase 05 P02 | 5min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Fixed GRDB UUID BLOB/TEXT mismatch: Column(flightID) == flightID instead of .uuidString
 - [Phase 05]: Replay layers added on-demand via addReplayLayers, not in onStyleLoaded
 - [Phase 05]: testTick() bypasses isPlaying guard for deterministic unit testing
+- [Phase 05]: VStack segmented picker above FlightPlanView/FlightHistoryListView to avoid nested NavigationStack conflict
+- [Phase 05]: Separate MLNMapView instance for ReplayMapView to prevent replay layers polluting live navigation map
+- [Phase 05]: Exposed trackPoints/transcriptSegments as private(set) on ReplayEngine for UI view access
 
 ### Pending Todos
 
@@ -137,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T17:57:50.856Z
-Stopped at: Completed 05-01-PLAN.md (ReplayEngine + MapService replay layers)
+Last session: 2026-03-21T18:06:13.371Z
+Stopped at: Completed 05-02-PLAN.md (Track Replay UI + Flights tab wiring)
 Resume file: None

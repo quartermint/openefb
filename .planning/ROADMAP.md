@@ -102,7 +102,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — ReplayEngine (@Observable time model with AVAudioPlayer sync, GPS interpolation, transcript matching), MapService replay track/marker layers, unit tests
-- [ ] 05-02-PLAN.md — Replay UI (ReplayView, ReplayMapView, TranscriptPanelView, TimelineScrubBar), FlightHistoryListView, FlightDetailView Replay button, Flights tab Plans/History segmented control
+- [x] 05-02-PLAN.md — Replay UI (ReplayView, ReplayMapView, TranscriptPanelView, TimelineScrubBar), FlightHistoryListView, FlightDetailView Replay button, Flights tab Plans/History segmented control
 
 ### Phase 6: Polish + TestFlight
 **Goal**: The app passes Apple privacy review, performs well on real iPad hardware, and is live on public TestFlight for VFR pilots to install and test
