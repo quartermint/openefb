@@ -26,6 +26,8 @@ final class MapService {
     private var ownshipSource: MLNShapeSource?
     private var routeSource: MLNShapeSource?
     private var routeAnnotations: [MLNAnnotation] = []
+    private var replayTrackSource: MLNShapeSource?
+    private var replayMarkerSource: MLNShapeSource?
     private var sectionalLayer: MLNRasterStyleLayer?
 
     /// Chart expiration date read from MBTiles metadata (INFRA-03)
@@ -551,6 +553,154 @@ final class MapService {
 
         routeAnnotations = [depAnnotation, destAnnotation]
         mapView?.addAnnotations(routeAnnotations)
+    }
+
+    // MARK: - Replay Layers (on-demand, not in onStyleLoaded)
+
+    /// Add replay track polyline and position marker layers to the map style.
+    /// Called when entering replay mode -- NOT in onStyleLoaded to avoid replay artifacts during navigation.
+    func addReplayLayers(to style: MLNStyle) {
+        // Replay track polyline -- orange 3pt line (distinct from magenta route line)
+        let trackSource = MLNShapeSource(
+            identifier: "replay-track",
+            shape: MLNShapeCollectionFeature(shapes: []),
+            options: nil
+        )
+        style.addSource(trackSource)
+        self.replayTrackSource = trackSource
+
+        let lineLayer = MLNLineStyleLayer(identifier: "replay-track-line", source: trackSource)
+        lineLayer.lineColor = NSExpression(forConstantValue: UIColor.systemOrange)
+        lineLayer.lineWidth = NSExpression(forConstantValue: 3.0)
+        lineLayer.lineCap = NSExpression(forConstantValue: "round")
+        lineLayer.lineJoin = NSExpression(forConstantValue: "round")
+        style.addLayer(lineLayer)
+
+        // Replay marker icon -- 24pt orange circle with white center dot
+        let markerIcon = createReplayMarkerIcon()
+        style.setImage(markerIcon, forName: "replay-marker")
+
+        // Replay position marker -- single point that moves along the track
+        let markerPoint = MLNPointFeature()
+        markerPoint.coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)
+        markerPoint.attributes = ["heading": 0]
+
+        let markerSource = MLNShapeSource(identifier: "replay-marker", shape: markerPoint, options: nil)
+        style.addSource(markerSource)
+        self.replayMarkerSource = markerSource
+
+        let symbolLayer = MLNSymbolStyleLayer(identifier: "replay-marker-symbol", source: markerSource)
+        symbolLayer.iconImageName = NSExpression(forConstantValue: "replay-marker")
+        symbolLayer.iconRotation = NSExpression(forKeyPath: "heading")
+        symbolLayer.iconAllowsOverlap = NSExpression(forConstantValue: true)
+        symbolLayer.iconIgnoresPlacement = NSExpression(forConstantValue: true)
+        symbolLayer.iconScale = NSExpression(forConstantValue: 1.0)
+        symbolLayer.iconRotationAlignment = NSExpression(forConstantValue: "map")
+        style.addLayer(symbolLayer)
+    }
+
+    /// Create a 24x24pt orange circle with white center dot for replay position marker.
+    /// Distinct from the blue ownship chevron -- indicates replayed position, not live.
+    private func createReplayMarkerIcon() -> UIImage {
+        let size = CGSize(width: 24, height: 24)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { context in
+            let ctx = context.cgContext
+            let center = CGPoint(x: 12, y: 12)
+
+            // Filled orange circle
+            ctx.setFillColor(UIColor.systemOrange.cgColor)
+            ctx.addEllipse(in: CGRect(x: 0, y: 0, width: 24, height: 24))
+            ctx.fillPath()
+
+            // White outline for contrast
+            ctx.setStrokeColor(UIColor.white.cgColor)
+            ctx.setLineWidth(1.5)
+            ctx.addEllipse(in: CGRect(x: 0.75, y: 0.75, width: 22.5, height: 22.5))
+            ctx.strokePath()
+
+            // White center dot (4pt diameter)
+            ctx.setFillColor(UIColor.white.cgColor)
+            ctx.addEllipse(in: CGRect(x: center.x - 2, y: center.y - 2, width: 4, height: 4))
+            ctx.fillPath()
+        }
+    }
+
+    /// Set the replay track polyline from track point coordinates.
+    /// Called ONCE when loading a flight for replay.
+    func updateReplayTrack(_ trackPoints: [TrackPointRecord]) {
+        var coords = trackPoints.map {
+            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+        }
+        guard !coords.isEmpty else {
+            replayTrackSource?.shape = MLNShapeCollectionFeature(shapes: [])
+            return
+        }
+        let polyline = MLNPolylineFeature(coordinates: &coords, count: UInt(coords.count))
+        replayTrackSource?.shape = polyline
+    }
+
+    /// Update the replay position marker to the current interpolated coordinate.
+    /// Called at 20Hz from ReplayEngine tick during playback.
+    func updateReplayMarker(coordinate: CLLocationCoordinate2D, heading: Double) {
+        let point = MLNPointFeature()
+        point.coordinate = coordinate
+        point.attributes = ["heading": heading]
+        replayMarkerSource?.shape = point
+    }
+
+    /// Remove all replay layers and sources from the map style.
+    /// Called when exiting replay mode to clean up.
+    func removeReplayLayers() {
+        guard let style = mapView?.style else { return }
+
+        // Remove layers first, then sources (layers reference sources)
+        if let _ = style.layer(withIdentifier: "replay-track-line") {
+            style.removeLayer(style.layer(withIdentifier: "replay-track-line")!)
+        }
+        if let _ = style.layer(withIdentifier: "replay-marker-symbol") {
+            style.removeLayer(style.layer(withIdentifier: "replay-marker-symbol")!)
+        }
+        if let _ = style.source(withIdentifier: "replay-track") {
+            style.removeSource(style.source(withIdentifier: "replay-track")!)
+        }
+        if let _ = style.source(withIdentifier: "replay-marker") {
+            style.removeSource(style.source(withIdentifier: "replay-marker")!)
+        }
+
+        replayTrackSource = nil
+        replayMarkerSource = nil
+    }
+
+    /// Fit the map view to show the entire replay track with padding.
+    /// Called when replay view first opens to show the full flight track.
+    func fitMapToTrack(_ trackPoints: [TrackPointRecord]) {
+        guard !trackPoints.isEmpty else { return }
+
+        var minLat = trackPoints[0].latitude
+        var maxLat = trackPoints[0].latitude
+        var minLon = trackPoints[0].longitude
+        var maxLon = trackPoints[0].longitude
+
+        for point in trackPoints {
+            minLat = min(minLat, point.latitude)
+            maxLat = max(maxLat, point.latitude)
+            minLon = min(minLon, point.longitude)
+            maxLon = max(maxLon, point.longitude)
+        }
+
+        let sw = CLLocationCoordinate2D(latitude: minLat, longitude: minLon)
+        let ne = CLLocationCoordinate2D(latitude: maxLat, longitude: maxLon)
+        let bounds = MLNCoordinateBounds(sw: sw, ne: ne)
+        let padding = UIEdgeInsets(top: 50, left: 50, bottom: 50, right: 50)
+
+        mapView?.setVisibleCoordinateBounds(bounds, edgePadding: padding, animated: true, completionHandler: nil)
+    }
+
+    /// Center the map on a specific coordinate.
+    /// Used by auto-follow mode during replay playback.
+    func centerOnCoordinate(_ coordinate: CLLocationCoordinate2D, animated: Bool = true) {
+        mapView?.setCenter(coordinate, animated: animated)
     }
 
     // MARK: - Layer Visibility
