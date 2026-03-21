@@ -48,9 +48,12 @@ Validated in Phase 4: AI Debrief + Logbook
 - [x] Digital logbook with entries auto-populated from recording data
 - [x] Currency warnings: medical expiry, flight review, 61.57 night landing currency with logbook integration
 
+Validated in Phase 5: Track Replay
+- [x] Track replay: GPS track playback on map with synchronized cockpit audio and scrolling transcript
+- [x] Flight history browsing with chronological list and flight detail view
+
 ### Active
 
-- [ ] Track replay: playback on map with synchronized audio and transcript
 - [ ] Public TestFlight distribution
 
 ### Out of Scope
@@ -137,6 +140,8 @@ Public TestFlight beta. VFR GA pilots, 50-150 hrs/year, iPad in cockpit. Must wo
 
 ## Current State
 
+Phase 5 complete — ReplayEngine @Observable coordinator with 20Hz timer, GPS interpolation between 1Hz track points, AVAudioPlayer sync with drift correction, speed control (1x/2x with audio, 4x/8x muted). ReplayView full-screen with collapsible transcript panel, TimelineScrubBar with phase markers, ReplayMapView with isolated MapService. FlightHistoryListView, Flights tab Plans/History segmented control. 20 unit tests.
+
 Phase 4 complete — @Generable FlightDebrief schema with Apple Foundation Models, FlightSummaryBuilder (3K token budget compression), DebriefEngine (LanguageModelSession lifecycle with streaming + graceful degradation), LogbookEntry SwiftData model with auto-population from RecordingViewModel, logbook list/edit/confirm views, CurrencyWarningBanner on map, currency bridge from logbook confirm to PilotProfile night landings. 34 new tests. Human verification deferred for streaming debrief + FM unavailable UX.
 
 Phase 3 complete — RecordingCoordinator actor, FlightPhaseDetector (8 phases with 30s hysteresis), TrackRecorder (CLLocationUpdate .airborne), AudioRecorder (AVAudioEngine dual output, interruption handling), TranscriptionService (SpeechAnalyzer + SFSpeechRecognizer fallback), AviationVocabularyProcessor, RecordingOverlayView with record button + status bar + transcript panel. 47+ tests. VSI computation from GPS altitude delta noted as operational gap for real hardware.
@@ -146,4 +151,4 @@ Phase 2 complete — Aircraft/pilot profiles with SwiftData, CurrencyService (FA
 Phase 1 complete — 25,071 US airports, moving map with MapLibre + VFR sectional overlay, NOAA weather, airspace/TFR boundaries, instrument strip, nearest airport HUD, airport search.
 
 ---
-*Last updated: 2026-03-21 after Phase 4 completion*
+*Last updated: 2026-03-21 after Phase 5 completion*
