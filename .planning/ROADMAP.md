@@ -31,14 +31,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Pilot taps any airport on the map and sees runways (length/width/surface), radio frequencies, field elevation, current METAR with flight category color, and TAF; weather dot color coding is visible on the map; all weather data shows a staleness badge
   4. Pilot can toggle airspace boundaries (Class B/C/D with floor/ceiling labels), TFR polygons, weather dots, navaids, and airports on and off; proximity alerts fire when approaching Class B/C/D or an active TFR
   5. Pilot taps nearest airport to get a sorted list with distance, bearing, runways, and one-tap direct-to; instrument strip shows GS/ALT/VSI/TRK/DTG/ETE updating from GPS
-**Plans**: 5 plans
+**Plans**: 6 plans
 
 Plans:
 - [ ] 01-01-PLAN.md — @Observable AppState, shared types, domain models, service protocols, SwiftData V1 schema, app entry point
 - [ ] 01-02-PLAN.md — Aviation database: bundled SQLite with NASR airports, GRDB R-tree spatial index, FTS5 search, NASR importer tool
 - [ ] 01-03-PLAN.md — Map layer: MapLibre UIViewRepresentable, GeoJSON sources, ownship GPS, VFR sectional overlay, layer toggles, LocationService
 - [ ] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
-- [ ] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, airport search, MapContainerView final assembly
+- [ ] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, nearest airport list
+- [ ] 01-06-PLAN.md — Final assembly: airport search, MapContainerView wiring with all services
 
 ### Phase 2: Profiles + Flight Planning
 **Goal**: A pilot can enter their aircraft specs and certificate information, create a basic A→B flight plan with fuel and time calculations, and check their currency status before flying
@@ -126,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Navigation Core | 0/5 | Planned | - |
+| 1. Foundation + Navigation Core | 0/6 | Planned | - |
 | 2. Profiles + Flight Planning | 0/3 | Not started | - |
 | 3. Flight Recording Engine | 0/3 | Not started | - |
 | 4. AI Debrief + Logbook | 0/4 | Not started | - |
