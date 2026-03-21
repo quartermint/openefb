@@ -45,6 +45,18 @@ actor AudioRecorder: AudioRecorderProtocol {
 
     private let logger = Logger(subsystem: "quartermint.efb-212", category: "AudioRecorder")
 
+    // MARK: - Callback Setters
+
+    /// Set the buffer streaming callback (called from RecordingCoordinator wiring).
+    func setOnBufferAvailable(_ callback: (@Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void)?) {
+        onBufferAvailable = callback
+    }
+
+    /// Set the interruption gap callback (called from RecordingCoordinator wiring).
+    func setOnInterruptionGap(_ callback: (@Sendable (InterruptionGapReason) -> Void)?) {
+        onInterruptionGap = callback
+    }
+
     // MARK: - AudioRecorderProtocol
 
     var isRecording: Bool { _isRecording }
