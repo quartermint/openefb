@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-02-PLAN.md (Settings + Beta Banner + Weather Age)
-last_updated: "2026-03-21T20:21:57.087Z"
+stopped_at: Completed 06-01-PLAN.md (Privacy manifest + validation tests)
+last_updated: "2026-03-21T20:25:51.416Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 21
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 06 (polish-testflight) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Plan: 2 of 3
 | Phase 05 P01 | 68min | 2 tasks | 4 files |
 | Phase 05 P02 | 5min | 3 tasks | 9 files |
 | Phase 06 P02 | 3min | 2 tasks | 5 files |
+| Phase 06 P01 | 7min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -131,6 +132,7 @@ Recent decisions affecting current work:
 - [Phase 05]: Exposed trackPoints/transcriptSegments as private(set) on ReplayEngine for UI view access
 - [Phase 06]: @AppStorage for beta banner dismissal instead of SwiftData -- simpler for single boolean flag
 - [Phase 06]: Weather age badge in LayerControlsView under Weather toggle -- map GeoJSON dots cannot host SwiftUI views
+- [Phase 06]: File-system path approach (#filePath) for test access to PrivacyInfo.xcprivacy since test host does not bundle xcprivacy into test target
 
 ### Pending Todos
 
@@ -144,6 +146,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T20:21:57.081Z
-Stopped at: Completed 06-02-PLAN.md (Settings + Beta Banner + Weather Age)
+Last session: 2026-03-21T20:25:51.409Z
+Stopped at: Completed 06-01-PLAN.md (Privacy manifest + validation tests)
 Resume file: None

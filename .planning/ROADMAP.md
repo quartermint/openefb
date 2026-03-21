@@ -116,7 +116,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Privacy manifest: PrivacyInfo.xcprivacy with location, audio, UserDefaults declarations + automated validation tests
+- [x] 06-01-PLAN.md — Privacy manifest: PrivacyInfo.xcprivacy with location, audio, UserDefaults declarations + automated validation tests
 - [x] 06-02-PLAN.md — Settings view, beta banner, weather staleness expansion: replace Settings placeholder, add dismissable beta disclaimer, add weather age indicator to LayerControlsView
 - [ ] 06-03-PLAN.md — Onboarding + TestFlight prep: 3-screen first-time walkthrough, app entry point gate, human verification of integrated flow
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Flight Recording Engine | 3/3 | Complete | 2026-03-21 |
 | 4. AI Debrief + Logbook | 0/3 | Planned | - |
 | 5. Track Replay | 0/2 | Planned | - |
-| 6. Polish + TestFlight | 0/3 | Planned | - |
+| 6. Polish + TestFlight | 2/3 | In Progress|  |
 
 ---
 
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 **Goal:** Traffic awareness from Sentry/Stratus/GDL devices via Bluetooth/Wi-Fi, FIS-B weather overlays on moving map, TIS-B traffic display. Major differentiator vs paid EFBs like ForeFlight/Garmin Pilot. Depends on Phase 1 map infrastructure.
 **Requirements:** TBD
-**Plans:** 0 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
