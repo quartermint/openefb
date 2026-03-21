@@ -71,10 +71,10 @@ final class ReplayEngine {
     /// Number of loaded phase markers (for test verification)
     var phaseMarkerCount: Int { phaseMarkers.count }
 
-    // MARK: - Private Data
+    // MARK: - Loaded Data (readable by replay UI, written only during loadFlight)
 
-    private var trackPoints: [TrackPointRecord] = []
-    private var transcriptSegments: [TranscriptSegmentRecord] = []
+    private(set) var trackPoints: [TrackPointRecord] = []
+    private(set) var transcriptSegments: [TranscriptSegmentRecord] = []
     private var phaseMarkers: [PhaseMarkerRecord] = []
     private var audioPlayer: AVAudioPlayer?
     private var playbackTimer: Timer?
