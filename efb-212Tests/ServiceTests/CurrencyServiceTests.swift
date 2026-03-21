@@ -130,4 +130,52 @@ struct CurrencyServiceTests {
         let status = CurrencyService.overallStatus(medical: .current, flightReview: .current, night: .expired)
         #expect(status == .expired)
     }
+
+    // MARK: - Logbook-Derived Night Currency (LOG-03 bridge)
+
+    @Test func nightCurrencyFromLogbookSingleConfirmedEntry() {
+        // Simulates: pilot confirms logbook entry with 3 night landings 10 days ago
+        let date = Calendar.current.date(byAdding: .day, value: -10, to: Date())!
+        let landings: [(date: Date, count: Int)] = [(date: date, count: 3)]
+        let status = CurrencyService.nightCurrencyStatus(nightLandings: landings)
+        #expect(status == .current)
+    }
+
+    @Test func nightCurrencyFromLogbookMultipleConfirmedEntries() {
+        // Simulates: 3 separate flights each with 1 night landing within 90 days
+        let date1 = Calendar.current.date(byAdding: .day, value: -80, to: Date())!
+        let date2 = Calendar.current.date(byAdding: .day, value: -50, to: Date())!
+        let date3 = Calendar.current.date(byAdding: .day, value: -20, to: Date())!
+        let landings: [(date: Date, count: Int)] = [
+            (date: date1, count: 1),
+            (date: date2, count: 1),
+            (date: date3, count: 1)
+        ]
+        let status = CurrencyService.nightCurrencyStatus(nightLandings: landings)
+        #expect(status == .current)
+    }
+
+    @Test func nightCurrencyFromLogbookMixedOldAndNew() {
+        // Simulates: 2 flights with night landings, one outside 90 days, one inside
+        // Only 1 landing in window (need 3) -- should be expired
+        let oldDate = Calendar.current.date(byAdding: .day, value: -100, to: Date())!
+        let newDate = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+        let landings: [(date: Date, count: Int)] = [
+            (date: oldDate, count: 5),
+            (date: newDate, count: 1)
+        ]
+        let status = CurrencyService.nightCurrencyStatus(nightLandings: landings)
+        #expect(status == .expired)
+    }
+
+    @Test func nightCurrencyFromLogbookExactlyAt90Days() {
+        // Simulates: 3 landings exactly 90 days ago -- boundary test
+        // Use a fixed 'now' to avoid millisecond drift between Date() calls
+        let now = Date()
+        let date = Calendar.current.date(byAdding: .day, value: -90, to: now)!
+        let landings: [(date: Date, count: Int)] = [(date: date, count: 3)]
+        let status = CurrencyService.nightCurrencyStatus(nightLandings: landings, now: now)
+        // At exactly 90 days, should still be current (within window)
+        #expect(status == .current)
+    }
 }

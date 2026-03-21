@@ -93,6 +93,12 @@ struct MapContainerView: View {
             // MARK: Layer 2 -- Floating UI overlays
 
             VStack(spacing: 0) {
+                // Currency warning banner (non-blocking, dismissable)
+                CurrencyWarningBanner()
+                    .withAutoCompute()
+                    .padding(.horizontal, 16)
+                    .padding(.top, 52)
+
                 // Top bar: search (left) + controls (right)
                 HStack(alignment: .top) {
                     // Top-left: Search bar + chart expiration badge
