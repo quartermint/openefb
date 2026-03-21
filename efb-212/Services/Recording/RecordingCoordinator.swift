@@ -9,6 +9,7 @@
 //  Design source: SFR FlightManager pattern, adapted for iOS 26 + @Observable.
 //
 
+import AVFoundation
 import Foundation
 import os
 
@@ -74,6 +75,19 @@ actor RecordingCoordinator {
         self.transcriptionService = transcriptionService
     }
 
+    /// Factory: create a production RecordingCoordinator with real AudioRecorder.
+    /// Uses real RecordingDatabase, real AudioRecorder, and placeholder TranscriptionService
+    /// (TranscriptionService wired in Plan 03).
+    static func makeDefault() throws -> RecordingCoordinator {
+        let db = try RecordingDatabase()
+        let audio = AudioRecorder()
+        return RecordingCoordinator(
+            recordingDB: db,
+            audioRecorder: audio,
+            transcriptionService: PlaceholderTranscriptionService()
+        )
+    }
+
     // MARK: - Core Lifecycle
 
     /// Start a new flight recording session.
@@ -107,9 +121,35 @@ actor RecordingCoordinator {
         trackRecorder = tracker
         await tracker.startTracking()
 
-        // Start audio recorder
+        // Start audio recorder -- wire callbacks if using real AudioRecorder
         let audioURL = Self.audioFileURL(for: flightID)
         audioOutputURL = audioURL
+
+        // Wire buffer streaming and interruption gap callbacks on real AudioRecorder
+        if let realRecorder = audioRecorder as? AudioRecorder {
+            // Buffer streaming: forward PCM buffers to transcription service (Plan 03 wiring point)
+            await realRecorder.setOnBufferAvailable { [weak self] buffer, time in
+                // Transcription service will consume these buffers when wired in Plan 03
+                _ = self  // Retain reference for future wiring
+            }
+
+            // Interruption gap: insert gap marker into recording database
+            let capturedDB = recordingDB
+            let capturedFlightID = flightID
+            await realRecorder.setOnInterruptionGap { reason in
+                // Insert interruption gap as a transcript segment marker
+                let gapSegment = TranscriptSegmentRecord(
+                    flightID: capturedFlightID,
+                    text: "[INTERRUPTION: \(reason)]",
+                    confidence: 1.0,
+                    audioStartTime: 0,
+                    audioEndTime: 0,
+                    flightPhase: FlightPhaseType.preflight.rawValue
+                )
+                try? capturedDB.insertTranscript(gapSegment)
+            }
+        }
+
         do {
             try await audioRecorder.startRecording(flightID: flightID, profile: profile, outputURL: audioURL)
         } catch {
