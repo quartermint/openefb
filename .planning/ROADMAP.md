@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Pilot taps any airport on the map and sees runways (length/width/surface), radio frequencies, field elevation, current METAR with flight category color, and TAF; weather dot color coding is visible on the map; all weather data shows a staleness badge
   4. Pilot can toggle airspace boundaries (Class B/C/D with floor/ceiling labels), TFR polygons, weather dots, navaids, and airports on and off; proximity alerts fire when approaching Class B/C/D or an active TFR
   5. Pilot taps nearest airport to get a sorted list with distance, bearing, runways, and one-tap direct-to; instrument strip shows GS/ALT/VSI/TRK/DTG/ETE updating from GPS
-**Plans**: 6 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 01-01-PLAN.md — @Observable AppState, shared types, domain models, service protocols, SwiftData V1 schema, app entry point
@@ -40,6 +40,7 @@ Plans:
 - [x] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
 - [x] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, nearest airport list
 - [x] 01-06-PLAN.md — Final assembly: airport search, MapContainerView wiring with all services
+- [ ] 01-07-PLAN.md — Gap closure: NASR importer rewrite for 20K+ airports (DATA-01), MapView animation guard fix
 
 ### Phase 2: Profiles + Flight Planning
 **Goal**: A pilot can enter their aircraft specs and certificate information, create a basic A→B flight plan with fuel and time calculations, and check their currency status before flying
@@ -127,7 +128,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Navigation Core | 3/6 | In Progress|  |
+| 1. Foundation + Navigation Core | 6/7 | In Progress (gap closure) |  |
 | 2. Profiles + Flight Planning | 0/3 | Not started | - |
 | 3. Flight Recording Engine | 0/3 | Not started | - |
 | 4. AI Debrief + Logbook | 0/4 | Not started | - |
