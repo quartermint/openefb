@@ -29,7 +29,7 @@ struct ContentView: View {
             }
 
             Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
-                FlightPlanView()
+                FlightsTabView()
             }
 
             Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
@@ -95,6 +95,44 @@ struct ContentView: View {
             predicate: #Predicate<SchemaV1.LogbookEntry> { $0.isConfirmed == false }
         )
         unconfirmedLogbookCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+    }
+}
+
+// MARK: - Flights Tab View
+
+/// Flights tab with segmented control for Plans and History.
+/// Defaults to History (pilots come here most often to review flights).
+struct FlightsTabView: View {
+
+    enum FlightsSection: String, CaseIterable {
+        case history = "History"
+        case plans = "Plans"
+    }
+
+    @State private var selectedSection: FlightsSection = .history
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Segmented control at top
+            Picker("", selection: $selectedSection) {
+                ForEach(FlightsSection.allCases, id: \.self) { section in
+                    Text(section.rawValue).tag(section)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 200)
+            .padding(.vertical, 8)
+
+            // Content
+            switch selectedSection {
+            case .plans:
+                FlightPlanView()
+            case .history:
+                NavigationStack {
+                    FlightHistoryListView()
+                }
+            }
+        }
     }
 }
 

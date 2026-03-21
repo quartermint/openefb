@@ -35,6 +35,11 @@ struct FlightDetailView: View {
 
                 Divider()
 
+                // MARK: - Track Replay Section
+                replaySection
+
+                Divider()
+
                 // MARK: - AI Debrief Section
                 debriefSection
             }
@@ -111,6 +116,47 @@ struct FlightDetailView: View {
             LabeledContent("Track Points", value: "\(flightRecord.trackPointCount)")
             LabeledContent("Transcript Segments", value: "\(flightRecord.transcriptSegmentCount)")
             LabeledContent("Audio Quality", value: flightRecord.audioQuality.capitalized)
+        }
+    }
+
+    // MARK: - Replay Section
+
+    @ViewBuilder
+    private var replaySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Track Replay", systemImage: "play.circle")
+                .font(.headline)
+
+            if appState.recordingStatus != .idle {
+                // Recording is active -- disable replay
+                Label("Stop the current recording to replay a flight", systemImage: "exclamationmark.triangle")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else if flightRecord.trackPointCount > 0 {
+                NavigationLink {
+                    ReplayView(flightRecord: flightRecord)
+                } label: {
+                    HStack {
+                        Image(systemName: "play.circle")
+                            .font(.title3)
+                        Text("Replay Flight")
+                            .font(.body.bold())
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.orange.opacity(0.1))
+                    )
+                }
+                .buttonStyle(.plain)
+            } else {
+                Label("No track data available for replay", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
