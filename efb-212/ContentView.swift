@@ -3,13 +3,19 @@
 //  efb-212
 //
 //  Root view -- 5-tab TabView shell.
-//  Each tab will be populated with real views in later plans.
+//  Aircraft tab shows real profile management views.
+//  Currency warning badge on Aircraft tab icon when any currency is warning/expired.
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var modelContext
+
+    /// Number of non-current currency statuses for tab badge display.
+    @State private var currencyBadgeCount: Int = 0
 
     var body: some View {
         @Bindable var appState = appState
@@ -20,7 +26,7 @@ struct ContentView: View {
             }
 
             Tab(AppTab.flights.title, systemImage: AppTab.flights.systemImage, value: .flights) {
-                Text("Flights Placeholder")
+                FlightPlanView()
             }
 
             Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
@@ -28,17 +34,58 @@ struct ContentView: View {
             }
 
             Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
-                Text("Aircraft Placeholder")
+                AircraftListView()
             }
+            .badge(currencyBadgeCount)
 
             Tab(AppTab.settings.title, systemImage: AppTab.settings.systemImage, value: .settings) {
                 Text("Settings Placeholder")
             }
         }
+        .onAppear {
+            updateCurrencyBadge()
+        }
+        .onChange(of: appState.activePilotProfileID) { _, _ in
+            updateCurrencyBadge()
+        }
+    }
+
+    // MARK: - Currency Badge Computation
+
+    /// Fetch active pilot profile and compute how many currency statuses are non-current.
+    /// Badge count shows on Aircraft tab icon (hidden when 0).
+    private func updateCurrencyBadge() {
+        let descriptor = FetchDescriptor<SchemaV1.PilotProfile>(
+            predicate: #Predicate<SchemaV1.PilotProfile> { $0.isActive == true }
+        )
+
+        guard let activeProfiles = try? modelContext.fetch(descriptor),
+              let profile = activeProfiles.first else {
+            currencyBadgeCount = 0
+            return
+        }
+
+        let medical = CurrencyService.medicalStatus(expiryDate: profile.medicalExpiry)
+        let flightReview = CurrencyService.flightReviewStatus(reviewDate: profile.flightReviewDate)
+        let nightLandings = profile.nightLandingEntries.map { (date: $0.date, count: $0.count) }
+        let night = CurrencyService.nightCurrencyStatus(nightLandings: nightLandings)
+
+        var count = 0
+        if medical != .current { count += 1 }
+        if flightReview != .current { count += 1 }
+        if night != .current { count += 1 }
+
+        currencyBadgeCount = count
     }
 }
 
 #Preview {
     ContentView()
         .environment(AppState())
+        .modelContainer(for: [
+            SchemaV1.AircraftProfile.self,
+            SchemaV1.PilotProfile.self,
+            SchemaV1.UserSettings.self,
+            SchemaV1.FlightPlanRecord.self
+        ])
 }
