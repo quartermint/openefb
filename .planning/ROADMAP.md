@@ -84,13 +84,12 @@ Plans:
   2. On a device without Apple Intelligence enabled, the debrief screen shows a clear, non-alarming message explaining why debrief is unavailable with options for what the pilot can still do
   3. A digital logbook entry is auto-created from the recording with correct date, departure airport, arrival airport, route, block time, and aircraft; pilot can edit any field before confirming
   4. Pilot profile screen shows active warnings (yellow/red badges) when medical certificate, flight review, or 61.57 night currency is within 30 days of expiry or already expired
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: FlightSummaryBuilder — token budget strategy (per-phase chunking to stay under 3,000 tokens from 4,096 limit), flight data compression from GRDB GPS track + transcript, phase-by-phase summarization pipeline
-- [ ] 04-02: DebriefEngine — LanguageModelSession lifecycle (prewarm on FlightDetailView appear, discard on dismiss), @Generable FlightDebrief schema, streaming output to FlightDetailView, graceful degradation for unavailable Foundation Models
-- [ ] 04-03: Logbook — LogbookEntry SwiftData model, auto-population from RecordingCoordinator output (departure/arrival from R-tree reverse lookup, duration, aircraft), pilot review + edit view, logbook list view
-- [ ] 04-04: Currency warnings — computation layer wired to PilotProfile + LogbookEntry, warning display in profile and logbook views (30-day lookahead, 90-day 61.57 window)
+- [ ] 04-01-PLAN.md — Debrief data pipeline: @Generable FlightDebrief schema, FlightSummaryBuilder token compression, DebriefEngine LanguageModelSession lifecycle, GRDB debrief_results migration, availability checking
+- [ ] 04-02-PLAN.md — Digital logbook: LogbookEntry SwiftData model, auto-population from recording, LogbookViewModel CRUD, LogbookListView, LogbookEntryEditView with confirm workflow
+- [ ] 04-03-PLAN.md — UI wiring: DebriefView streaming display, FlightDetailView debrief button, currency warning bridge (logbook confirm to PilotProfile), CurrencyWarningBanner on map, ContentView logbook tab
 
 ### Phase 5: Track Replay
 **Goal**: A pilot can select any past flight, watch their route replay on the map with synchronized cockpit audio and scrolling transcript, and browse their full flight history
@@ -130,8 +129,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation + Navigation Core | 7/7 | Complete | 2026-03-21 |
 | 2. Profiles + Flight Planning | 3/3 | Complete | 2026-03-21 |
-| 3. Flight Recording Engine | 0/3 | Planned | - |
-| 4. AI Debrief + Logbook | 0/4 | Not started | - |
+| 3. Flight Recording Engine | 3/3 | Complete | 2026-03-21 |
+| 4. AI Debrief + Logbook | 0/3 | Planned | - |
 | 5. Track Replay | 0/2 | Not started | - |
 | 6. Polish + TestFlight | 0/3 | Not started | - |
 
