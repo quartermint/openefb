@@ -28,7 +28,8 @@ struct efb_212App: App {
                         SchemaV1.AircraftProfile.self,
                         SchemaV1.PilotProfile.self,
                         SchemaV1.FlightPlanRecord.self,
-                        SchemaV1.FlightRecord.self
+                        SchemaV1.FlightRecord.self,
+                        SchemaV1.LogbookEntry.self
                     ])
             } else {
                 ContentView()
@@ -38,7 +39,8 @@ struct efb_212App: App {
                         SchemaV1.AircraftProfile.self,
                         SchemaV1.PilotProfile.self,
                         SchemaV1.FlightPlanRecord.self,
-                        SchemaV1.FlightRecord.self
+                        SchemaV1.FlightRecord.self,
+                        SchemaV1.LogbookEntry.self
                     ])
             }
         }

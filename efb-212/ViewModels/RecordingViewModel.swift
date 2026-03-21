@@ -10,8 +10,10 @@
 //  and audio level updates.
 //
 
+import CoreLocation
 import Foundation
 import Observation
+import SwiftData
 
 @Observable
 @MainActor
@@ -34,6 +36,12 @@ final class RecordingViewModel {
     private let coordinator: RecordingCoordinator
     private weak var appState: AppState?
     private var syncTask: Task<Void, Never>?
+
+    /// Optional logbook integration -- set from view layer to enable auto-population.
+    var logbookViewModel: LogbookViewModel?
+
+    /// SwiftData model context for logbook entry creation (injected from view layer).
+    var modelContext: ModelContext?
 
     // MARK: - Init
 
@@ -64,10 +72,48 @@ final class RecordingViewModel {
     }
 
     /// Confirm stop after dialog approval.
+    /// After stopping the recording, auto-creates a logbook entry (LOG-01) if
+    /// logbookViewModel and modelContext are available.
     func confirmStop() async {
         showStopConfirmation = false
-        _ = await coordinator.stopRecording()
+        let summary = await coordinator.stopRecording()
         appState?.activeFlightRecordID = nil
+
+        // LOG-01: Auto-create logbook entry from recording data
+        if let summary, let logbookVM = logbookViewModel, let ctx = modelContext {
+            // Resolve departure airport from first track point via R-tree nearest lookup
+            var depICAO: String?
+            var depName: String?
+            var arrICAO: String?
+            var arrName: String?
+
+            if let dbService = appState?.sharedDatabaseService {
+                // Use summary departure/arrival if coordinator resolved them
+                if let icao = summary.departureICAO {
+                    depICAO = icao
+                    depName = (try? dbService.airport(byICAO: icao))?.name
+                }
+                if let icao = summary.arrivalICAO {
+                    arrICAO = icao
+                    arrName = (try? dbService.airport(byICAO: icao))?.name
+                }
+            }
+
+            let aircraftID = appState?.activeAircraftProfileID
+            let pilotID = appState?.activePilotProfileID
+
+            logbookVM.createFromRecording(
+                summary: summary,
+                departureICAO: depICAO,
+                departureName: depName,
+                arrivalICAO: arrICAO,
+                arrivalName: arrName,
+                aircraftProfileID: aircraftID,
+                aircraftType: nil,  // Will be populated from aircraft profile in edit view
+                pilotProfileID: pilotID,
+                modelContext: ctx
+            )
+        }
     }
 
     /// Cancel an active auto-start countdown.
