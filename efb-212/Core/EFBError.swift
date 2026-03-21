@@ -25,6 +25,9 @@ enum EFBError: LocalizedError, Identifiable {
 
     // Recording
     case recordingFailed(underlying: Error)
+    case audioSessionFailed(underlying: Error)
+    case transcriptionUnavailable
+    case microphonePermissionDenied
 
     // Database
     case databaseCorrupted
@@ -60,6 +63,12 @@ enum EFBError: LocalizedError, Identifiable {
             return "weatherFetchFailed"
         case .recordingFailed:
             return "recordingFailed"
+        case .audioSessionFailed:
+            return "audioSessionFailed"
+        case .transcriptionUnavailable:
+            return "transcriptionUnavailable"
+        case .microphonePermissionDenied:
+            return "microphonePermissionDenied"
         case .databaseCorrupted:
             return "databaseCorrupted"
         case .databaseMigrationFailed:
@@ -103,6 +112,15 @@ enum EFBError: LocalizedError, Identifiable {
         case .recordingFailed(let underlying):
             return "Flight recording error: \(underlying.localizedDescription)"
 
+        case .audioSessionFailed(let underlying):
+            return "Audio session configuration failed: \(underlying.localizedDescription)"
+
+        case .transcriptionUnavailable:
+            return "Speech recognition is not available on this device. Transcription will be skipped."
+
+        case .microphonePermissionDenied:
+            return "Microphone access is required for cockpit audio recording. Enable in Settings > Privacy > Microphone."
+
         case .databaseCorrupted:
             return "Aviation database is corrupted. Re-import NASR data from Settings."
 
@@ -140,6 +158,12 @@ enum EFBError: LocalizedError, Identifiable {
         case .weatherFetchFailed:
             return .error
         case .recordingFailed:
+            return .error
+        case .audioSessionFailed:
+            return .error
+        case .transcriptionUnavailable:
+            return .warning
+        case .microphonePermissionDenied:
             return .error
         case .databaseCorrupted:
             return .critical

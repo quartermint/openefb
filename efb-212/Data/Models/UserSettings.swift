@@ -14,7 +14,7 @@ import SwiftData
 enum SchemaV1: VersionedSchema {
     static var versionIdentifier = Schema.Version(1, 0, 0)
     static var models: [any PersistentModel.Type] {
-        [UserSettings.self, AircraftProfile.self, PilotProfile.self, FlightPlanRecord.self]
+        [UserSettings.self, AircraftProfile.self, PilotProfile.self, FlightPlanRecord.self, FlightRecord.self]
     }
 
     @Model

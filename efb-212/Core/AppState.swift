@@ -10,6 +10,14 @@
 import Observation
 import CoreLocation
 
+/// Lightweight transcript segment for UI display in the live transcription panel.
+struct TranscriptDisplayItem: Identifiable, Sendable {
+    let id: UUID
+    let text: String
+    let timestamp: Date
+    let isVolatile: Bool
+}
+
 @Observable
 @MainActor
 final class AppState {
@@ -56,6 +64,17 @@ final class AppState {
 
     var activeAircraftProfileID: UUID?
     var activePilotProfileID: UUID?
+
+    // MARK: - Recording State
+
+    var recordingStatus: RecordingStatus = .idle
+    var currentFlightPhase: FlightPhaseType = .preflight
+    var recordingElapsedTime: TimeInterval = 0
+    var recentTranscripts: [TranscriptDisplayItem] = []  // last 5 for live panel
+    var audioLevel: Float = -160  // dBFS for level meter
+    var isAutoStartEnabled: Bool = true
+    var autoStartSpeedThresholdKts: Double = 15.0  // knots, user configurable
+    var activeFlightRecordID: UUID?
 
     // MARK: - Shared Services (set by MapContainerView, used by other tabs)
 
