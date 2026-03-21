@@ -42,6 +42,10 @@ enum EFBError: LocalizedError, Identifiable {
     // Network
     case networkUnavailable
 
+    // Debrief
+    case debriefFailed(underlying: Error)
+    case debriefUnavailable(reason: String)
+
     // Aviation Data
     case airportNotFound(String)
 
@@ -79,6 +83,10 @@ enum EFBError: LocalizedError, Identifiable {
             return "tfrFetchFailed"
         case .networkUnavailable:
             return "networkUnavailable"
+        case .debriefFailed:
+            return "debriefFailed"
+        case .debriefUnavailable(let reason):
+            return "debriefUnavailable-\(reason)"
         case .airportNotFound(let icao):
             return "airportNotFound-\(icao)"
         }
@@ -136,6 +144,12 @@ enum EFBError: LocalizedError, Identifiable {
         case .networkUnavailable:
             return "No network connection. Weather and chart downloads are unavailable."
 
+        case .debriefFailed(let underlying):
+            return "AI debrief generation failed: \(underlying.localizedDescription)"
+
+        case .debriefUnavailable(let reason):
+            return reason
+
         case .airportNotFound(let icao):
             return "Airport \"\(icao)\" not found in the database. Verify the identifier or update your aviation data."
         }
@@ -174,6 +188,10 @@ enum EFBError: LocalizedError, Identifiable {
         case .tfrFetchFailed:
             return .warning
         case .networkUnavailable:
+            return .warning
+        case .debriefFailed:
+            return .error
+        case .debriefUnavailable:
             return .warning
         case .airportNotFound:
             return .info
