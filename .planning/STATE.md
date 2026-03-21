@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-02-PLAN.md (AudioRecorder with AVAudioEngine dual output, interruption handling, RecordingCoordinator wiring)
-last_updated: "2026-03-21T14:37:49.477Z"
+stopped_at: Completed 04-02-PLAN.md (LogbookEntry model, views, RecordingViewModel wiring)
+last_updated: "2026-03-21T16:05:03.067Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 16
+  completed_plans: 14
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** A pilot can install the app, fly with it as their primary EFB, record their flight, and get an AI debrief afterward — all free, all on-device, no account required.
-**Current focus:** Phase 03 — flight-recording-engine
+**Current focus:** Phase 04 — AI Debrief + Logbook
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
+Phase: 04 (AI Debrief + Logbook) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Plan: Not started
 | Phase 02 P03 | 5min | 2 tasks | 8 files |
 | Phase 03 P01 | 17min | 2 tasks | 16 files |
 | Phase 03 P02 | 12min | 2 tasks | 4 files |
+| Phase 04 P02 | 45min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Actor setter methods for cross-actor callback wiring (setOnBufferAvailable, setOnInterruptionGap)
 - [Phase 03]: didBecomeActive fallback for interruptions without end notification (Apple docs: not guaranteed)
 - [Phase 03]: Gap markers stored as TranscriptSegmentRecord with [INTERRUPTION: reason] text
+- [Phase 04]: nonisolated static for pure-function duration formatting on @MainActor LogbookViewModel
+- [Phase 04]: RecordingViewModel uses optional logbookViewModel/modelContext injection for loose coupling
+- [Phase 04]: Confirmed logbook entries open in read-only mode (isConfirmed controls navigation behavior)
 
 ### Pending Todos
 
@@ -119,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T09:14:32.822Z
-Stopped at: Completed 03-02-PLAN.md (AudioRecorder with AVAudioEngine dual output, interruption handling, RecordingCoordinator wiring)
+Last session: 2026-03-21T16:05:02.987Z
+Stopped at: Completed 04-02-PLAN.md (LogbookEntry model, views, RecordingViewModel wiring)
 Resume file: None

@@ -88,7 +88,7 @@ Plans:
 
 Plans:
 - [ ] 04-01-PLAN.md — Debrief data pipeline: @Generable FlightDebrief schema, FlightSummaryBuilder token compression, DebriefEngine LanguageModelSession lifecycle, GRDB debrief_results migration, availability checking
-- [ ] 04-02-PLAN.md — Digital logbook: LogbookEntry SwiftData model, auto-population from recording, LogbookViewModel CRUD, LogbookListView, LogbookEntryEditView with confirm workflow
+- [x] 04-02-PLAN.md — Digital logbook: LogbookEntry SwiftData model, auto-population from recording, LogbookViewModel CRUD, LogbookListView, LogbookEntryEditView with confirm workflow
 - [ ] 04-03-PLAN.md — UI wiring: DebriefView streaming display, FlightDetailView debrief button, currency warning bridge (logbook confirm to PilotProfile), CurrencyWarningBanner on map, ContentView logbook tab
 
 ### Phase 5: Track Replay
