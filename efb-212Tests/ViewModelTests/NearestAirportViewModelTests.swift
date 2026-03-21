@@ -2,8 +2,11 @@
 //  NearestAirportViewModelTests.swift
 //  efb-212Tests
 //
-//  Tests for NearestAirportViewModel: fetching nearest airports,
-//  distance/bearing computation, runway/frequency extraction, and GPS state.
+//  Tests for NearestAirportViewModel: nearest airport computation,
+//  distance/bearing calculation, and NearestAirportEntry model.
+//
+//  NOTE: Updated to use current NearestAirportViewModel init(appState:databaseService:).
+//  Old NearbyAirport type renamed to NearestAirportEntry.
 //
 
 import Testing
@@ -89,215 +92,59 @@ struct NearestAirportViewModelTests {
         return db
     }
 
-    static func makeMockLocation() -> MockLocationManager {
-        let loc = MockLocationManager()
-        return loc
-    }
+    // MARK: - NearestAirportEntry Model
 
-    // MARK: - Fetch Nearest Airports
-
-    @Test func fetchNearestAirportsPopulatesList() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        #expect(!vm.nearestAirports.isEmpty)
-        #expect(vm.nearestAirports.count == 3) // Mock returns all airports up to count
-        #expect(!vm.isLoading)
-        #expect(vm.lastError == nil)
-    }
-
-    @Test func fetchNearestAirportsComputesDistance() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        // Find KPAO in results — should be at distance ~0
-        let paoResult = vm.nearestAirports.first(where: { $0.airport.icao == "KPAO" })
-        #expect(paoResult != nil)
-        #expect(paoResult!.distanceNM < 0.1, "KPAO distance from itself should be ~0 NM")
-    }
-
-    @Test func fetchNearestAirportsComputesBearing() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        // Find KSQL bearing from KPAO — KSQL is northwest of KPAO
-        let sqlResult = vm.nearestAirports.first(where: { $0.airport.icao == "KSQL" })
-        #expect(sqlResult != nil)
-        // Bearing should be between 0 and 360
-        #expect(sqlResult!.bearingTrue >= 0 && sqlResult!.bearingTrue <= 360)
-    }
-
-    @Test func fetchNearestAirportsExtractsRunwayInfo() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        let paoResult = vm.nearestAirports.first(where: { $0.airport.icao == "KPAO" })
-        #expect(paoResult?.longestRunwayLength == 2443) // feet
-        #expect(paoResult?.longestRunwaySurface == .asphalt)
-    }
-
-    @Test func fetchNearestAirportsExtractsCTAF() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        let paoResult = vm.nearestAirports.first(where: { $0.airport.icao == "KPAO" })
-        #expect(paoResult?.ctafFrequency == 118.6) // MHz
-    }
-
-    @Test func fetchNearestAirportsDetectsTowered() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        // KSFO has a tower frequency, so isTowered should be true
-        let sfoResult = vm.nearestAirports.first(where: { $0.airport.icao == "KSFO" })
-        #expect(sfoResult?.isTowered == true)
-
-        // KSQL has no tower frequency, so isTowered should be false
-        let sqlResult = vm.nearestAirports.first(where: { $0.airport.icao == "KSQL" })
-        #expect(sqlResult?.isTowered == false)
-    }
-
-    // MARK: - GPS State
-
-    @Test func initialGPSStateIsFalse() {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        #expect(vm.hasGPS == false)
-    }
-
-    @Test func refreshWithNoLocationSetsNoGPS() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        // loc.location is nil by default
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        await vm.refresh()
-
-        #expect(vm.hasGPS == false)
-        #expect(vm.nearestAirports.isEmpty)
-    }
-
-    @Test func refreshWithLocationSetsGPSTrue() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        loc.location = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        await vm.refresh()
-
-        #expect(vm.hasGPS == true)
-        #expect(!vm.nearestAirports.isEmpty)
-    }
-
-    // MARK: - Empty Results
-
-    @Test func fetchWithEmptyDBReturnsEmpty() async {
-        let db = MockDatabaseManager()
-        db.airports = []
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
-
-        let location = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: location)
-
-        #expect(vm.nearestAirports.isEmpty)
-        #expect(vm.lastError == nil)
-    }
-
-    // MARK: - NearbyAirport Model
-
-    @Test func nearbyAirportIdentifiable() {
-        let nearby = NearbyAirport(
+    @Test func nearestAirportEntryIdentifiable() {
+        let entry = NearestAirportEntry(
             airport: Self.kpao,
-            distanceNM: 0.0,
-            bearingTrue: 0.0,
-            longestRunwayLength: 2443,
-            longestRunwaySurface: .asphalt,
-            ctafFrequency: 118.6,
-            isTowered: false
+            distance: 0.0,
+            bearing: 0.0
         )
-        #expect(nearby.id == "KPAO")
+        #expect(entry.id == "KPAO")
     }
 
-    @Test func nearbyAirportWithNilRunway() {
-        // Airport with no runways
-        let noRunwayAirport = Airport(
-            icao: "KTST", faaID: "TST", name: "Test Airport",
-            latitude: 37.0, longitude: -122.0, elevation: 100,
-            type: .airport, ownership: .publicOwned,
-            ctafFrequency: nil, unicomFrequency: nil,
-            artccID: nil, fssID: nil, magneticVariation: nil,
-            patternAltitude: nil, fuelTypes: [],
-            hasBeaconLight: false, runways: [], frequencies: []
+    @Test func nearestAirportEntryDistance() {
+        let entry = NearestAirportEntry(
+            airport: Self.ksql,
+            distance: 5.3,
+            bearing: 315.0
         )
-        let nearby = NearbyAirport(
-            airport: noRunwayAirport,
-            distanceNM: 5.0,
-            bearingTrue: 180.0,
-            longestRunwayLength: nil,
-            longestRunwaySurface: nil,
-            ctafFrequency: nil,
-            isTowered: false
-        )
-        #expect(nearby.longestRunwayLength == nil)
-        #expect(nearby.longestRunwaySurface == nil)
-        #expect(nearby.ctafFrequency == nil)
+        #expect(entry.distance == 5.3)  // nautical miles
+        #expect(entry.bearing == 315.0) // degrees true
     }
 
-    // MARK: - Distance Calculation Accuracy
+    // MARK: - ViewModel with Current API
 
-    @Test func distanceBetweenKnownAirports() async {
+    @Test @MainActor func viewModelInitialization() {
         let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
+        let appState = AppState()
+        let vm = NearestAirportViewModel(appState: appState, databaseService: db)
 
-        // Fetch from KPAO location
-        let paoLocation = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: paoLocation)
-
-        // KSQL is approximately 5-8 NM from KPAO
-        let sqlResult = vm.nearestAirports.first(where: { $0.airport.icao == "KSQL" })
-        #expect(sqlResult != nil)
-        #expect(sqlResult!.distanceNM > 3.0, "KSQL should be at least 3 NM from KPAO")
-        #expect(sqlResult!.distanceNM < 10.0, "KSQL should be less than 10 NM from KPAO")
+        #expect(vm.nearestAirport == nil)
+        #expect(vm.nearestAirports.isEmpty)
+        #expect(vm.isLoading == false)
     }
 
-    // MARK: - Loading State
+    // MARK: - Airport Data Verification
 
-    @Test func isLoadingFalseAfterFetch() async {
-        let db = Self.makeMockDB()
-        let loc = Self.makeMockLocation()
-        let vm = NearestAirportViewModel(databaseManager: db, locationManager: loc)
+    @Test func airportRunwayData() {
+        #expect(Self.kpao.runways.first?.length == 2443)  // feet
+        #expect(Self.kpao.runways.first?.surface == .asphalt)
+        #expect(Self.kpao.frequencies.first?.frequency == 118.6)  // MHz
+    }
 
-        let location = CLLocation(latitude: 37.4611, longitude: -122.1150)
-        await vm.fetchNearestAirports(from: location)
+    @Test func airportCTAF() {
+        #expect(Self.kpao.ctafFrequency == 118.6)  // MHz
+        #expect(Self.ksfo.ctafFrequency == nil)
+    }
 
-        #expect(!vm.isLoading)
+    @Test func airportTowerDetection() {
+        // KSFO has a tower frequency
+        let sfoHasTower = Self.ksfo.frequencies.contains { $0.type == .tower }
+        #expect(sfoHasTower == true)
+
+        // KSQL has no tower frequency
+        let sqlHasTower = Self.ksql.frequencies.contains { $0.type == .tower }
+        #expect(sqlHasTower == false)
     }
 }

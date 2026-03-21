@@ -10,30 +10,20 @@ import CoreLocation
 import Combine
 @testable import efb_212
 
-final class MockLocationManager: LocationManagerProtocol {
-    var location: CLLocation?
-    var heading: CLHeading?
-    private let locationSubject = PassthroughSubject<CLLocation, Never>()
-    var locationPublisher: AnyPublisher<CLLocation, Never> { locationSubject.eraseToAnyPublisher() }
+final class MockLocationManager: LocationServiceProtocol, @unchecked Sendable {
+    var isTracking: Bool = false
 
     var requestAuthorizationCalled = false
-    var startUpdatingCalled = false
-    var stopUpdatingCalled = false
+    var startTrackingCalled = false
+    var stopTrackingCalled = false
 
-    func requestAuthorization() {
-        requestAuthorizationCalled = true
+    func startTracking() async {
+        startTrackingCalled = true
+        isTracking = true
     }
 
-    func startUpdating() {
-        startUpdatingCalled = true
-    }
-
-    func stopUpdating() {
-        stopUpdatingCalled = true
-    }
-
-    func simulateLocation(_ location: CLLocation) {
-        self.location = location
-        locationSubject.send(location)
+    func stopTracking() {
+        stopTrackingCalled = true
+        isTracking = false
     }
 }

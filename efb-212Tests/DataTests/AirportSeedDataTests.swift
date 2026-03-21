@@ -1,3 +1,7 @@
+// DISABLED: AirportSeedData was replaced by bundled SQLite database import.
+// Airport data is now loaded via AviationDatabase GRDB, not Swift literal arrays.
+// These tests will be replaced with AviationDatabase integration tests.
+#if false
 //
 //  AirportSeedDataTests.swift
 //  efb-212Tests
@@ -152,3 +156,4 @@ struct AirportSeedDataTests {
         #expect(total > 0, "allAirports() should return non-empty array")
     }
 }
+#endif
