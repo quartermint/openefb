@@ -50,6 +50,15 @@ final class MapViewModel {
         return Calendar.current.dateComponents([.day], from: Date(), to: expirationDate).day
     }
 
+    // MARK: - Weather Data Age
+
+    /// Oldest observation time from the last weather fetch, for staleness indicator.
+    /// Nil when no weather data is loaded or weather layer is off.
+    var oldestWeatherObservationTime: Date? {
+        get { _oldestWeatherObservationTime }
+    }
+    private(set) var _oldestWeatherObservationTime: Date?
+
     // MARK: - Private
 
     private var lastQueryCenter: CLLocationCoordinate2D?
@@ -238,6 +247,9 @@ final class MapViewModel {
         do {
             let weather = try await weatherService.fetchWeatherForStations(stationIDs)
             mapService.updateWeatherDots(weather, stationCoordinates: stationCoordinates)
+
+            // Track oldest observation for weather age badge
+            _oldestWeatherObservationTime = weather.compactMap { $0.observationTime }.min()
         } catch {
             // Weather fetch failure is non-critical -- dots just won't update
         }
