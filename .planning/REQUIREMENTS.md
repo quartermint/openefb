@@ -57,8 +57,8 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 - [x] **LOG-01**: App maintains a digital logbook with entries auto-populated from recording: date, departure, arrival, route, duration, aircraft
 - [x] **LOG-02**: Pilot can review and edit auto-populated logbook entries before confirming
-- [ ] **LOG-03**: App tracks pilot currency: medical expiry, flight review date, 61.57 night passenger-carrying (3 T/O + landings in 90 days)
-- [ ] **LOG-04**: App displays currency warnings when medical, flight review, or 61.57 requirements are approaching expiry
+- [x] **LOG-03**: App tracks pilot currency: medical expiry, flight review date, 61.57 night passenger-carrying (3 T/O + landings in 90 days)
+- [x] **LOG-04**: App displays currency warnings when medical, flight review, or 61.57 requirements are approaching expiry
 
 ### Track Replay
 
@@ -143,8 +143,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEBRIEF-03 | Phase 4 | Complete |
 | LOG-01 | Phase 4 | Complete |
 | LOG-02 | Phase 4 | Complete |
-| LOG-03 | Phase 4 | Pending |
-| LOG-04 | Phase 4 | Pending |
+| LOG-03 | Phase 4 | Complete |
+| LOG-04 | Phase 4 | Complete |
 | REPLAY-01 | Phase 5 | Pending |
 | REPLAY-02 | Phase 5 | Pending |
 | INFRA-01 | Phase 1 | Complete |
