@@ -15,7 +15,7 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 - [ ] **NAV-04**: Pilot can switch between map modes: VFR sectional, street, satellite, terrain
 - [ ] **NAV-05**: Pilot can toggle map layers on/off: airspace, TFRs, airports, navaids, weather
 - [ ] **NAV-06**: Pilot can find nearest airports sorted by distance with bearing, runways, and direct-to navigation
-- [ ] **NAV-07**: App tracks GPS position in background when screen is off or another app is in foreground
+- [x] **NAV-07**: App tracks GPS position in background when screen is off or another app is in foreground
 
 ### Aviation Data
 
@@ -67,7 +67,7 @@ Requirements for public TestFlight launch. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: App works offline with bundled airport database, pre-downloaded chart tiles, and cached weather data
+- [x] **INFRA-01**: App works offline with bundled airport database, pre-downloaded chart tiles, and cached weather data
 - [ ] **INFRA-02**: App monitors network reachability and clearly indicates when operating with cached/stale data
 - [ ] **INFRA-03**: Chart tiles are served from CDN with 56-day FAA cycle expiration metadata; app warns when charts are expired
 - [ ] **INFRA-04**: App includes privacy manifest compliant with App Store requirements
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NAV-04 | Phase 1 | Pending |
 | NAV-05 | Phase 1 | Pending |
 | NAV-06 | Phase 1 | Pending |
-| NAV-07 | Phase 1 | Pending |
+| NAV-07 | Phase 1 | Complete |
 | DATA-01 | Phase 1 | Pending |
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
@@ -147,7 +147,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOG-04 | Phase 4 | Pending |
 | REPLAY-01 | Phase 5 | Pending |
 | REPLAY-02 | Phase 5 | Pending |
-| INFRA-01 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Pending |
 | INFRA-03 | Phase 1 | Pending |
 | INFRA-04 | Phase 6 | Pending |
