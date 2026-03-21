@@ -135,5 +135,18 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 6. Polish + TestFlight | 0/3 | Not started | - |
 
 ---
+
+## Backlog
+
+### Phase 999.1: ADS-B In Integration (BACKLOG)
+
+**Goal:** Traffic awareness from Sentry/Stratus/GDL devices via Bluetooth/Wi-Fi, FIS-B weather overlays on moving map, TIS-B traffic display. Major differentiator vs paid EFBs like ForeFlight/Garmin Pilot. Depends on Phase 1 map infrastructure.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
+
+---
 *Roadmap created: 2026-03-20*
 *Coverage: 39/39 v1 requirements mapped*
