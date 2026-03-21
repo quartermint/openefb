@@ -42,12 +42,14 @@ Validated in Phase 1: Foundation + Navigation Core
 - [x] Background location for in-flight recording
 - [x] Network reachability monitoring with graceful degradation
 
+Validated in Phase 4: AI Debrief + Logbook
+- [x] On-device AI post-flight debrief via Apple Foundation Models
+- [x] Structured debrief: narrative summary, observations by phase, improvements, rating
+- [x] Digital logbook with entries auto-populated from recording data
+- [x] Currency warnings: medical expiry, flight review, 61.57 night landing currency with logbook integration
+
 ### Active
 
-- [ ] On-device AI post-flight debrief via Apple Foundation Models
-- [ ] Structured debrief: narrative summary, observations by phase, improvements, rating
-- [ ] Digital logbook with entries auto-populated from recording data
-- [ ] Currency tracking: medical expiry, flight review, night landings (61.57)
 - [ ] Track replay: playback on map with synchronized audio and transcript
 - [ ] Public TestFlight distribution
 
@@ -135,6 +137,8 @@ Public TestFlight beta. VFR GA pilots, 50-150 hrs/year, iPad in cockpit. Must wo
 
 ## Current State
 
+Phase 4 complete — @Generable FlightDebrief schema with Apple Foundation Models, FlightSummaryBuilder (3K token budget compression), DebriefEngine (LanguageModelSession lifecycle with streaming + graceful degradation), LogbookEntry SwiftData model with auto-population from RecordingViewModel, logbook list/edit/confirm views, CurrencyWarningBanner on map, currency bridge from logbook confirm to PilotProfile night landings. 34 new tests. Human verification deferred for streaming debrief + FM unavailable UX.
+
 Phase 3 complete — RecordingCoordinator actor, FlightPhaseDetector (8 phases with 30s hysteresis), TrackRecorder (CLLocationUpdate .airborne), AudioRecorder (AVAudioEngine dual output, interruption handling), TranscriptionService (SpeechAnalyzer + SFSpeechRecognizer fallback), AviationVocabularyProcessor, RecordingOverlayView with record button + status bar + transcript panel. 47+ tests. VSI computation from GPS altitude delta noted as operational gap for real hardware.
 
 Phase 2 complete — Aircraft/pilot profiles with SwiftData, CurrencyService (FAR 61.23/61.56/61.57), A-to-B flight planning with magenta great-circle route, distance/ETE/fuel calculations, currency badges (green/yellow/red) on profile and tab icon. 23 new unit tests.
@@ -142,4 +146,4 @@ Phase 2 complete — Aircraft/pilot profiles with SwiftData, CurrencyService (FA
 Phase 1 complete — 25,071 US airports, moving map with MapLibre + VFR sectional overlay, NOAA weather, airspace/TFR boundaries, instrument strip, nearest airport HUD, airport search.
 
 ---
-*Last updated: 2026-03-21 after Phase 3 completion*
+*Last updated: 2026-03-21 after Phase 4 completion*
