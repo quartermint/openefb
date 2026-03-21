@@ -114,6 +114,31 @@ final class LogbookViewModel {
         entry.isConfirmed = true
     }
 
+    /// Confirm a logbook entry and update pilot currency data.
+    /// If the entry has night landings, appends a NightLandingEntry to the active PilotProfile
+    /// so that CurrencyService.nightCurrencyStatus auto-calculates FAR 61.57 currency.
+    /// This closes the manual-entry gap from Phase 2 per CONTEXT.md decision.
+    func confirmEntryAndUpdateCurrency(_ entry: SchemaV1.LogbookEntry, modelContext: ModelContext) {
+        entry.isConfirmed = true
+
+        // Bridge night landings to PilotProfile for 61.57 currency auto-calculation
+        if entry.nightLandingCount > 0 {
+            let descriptor = FetchDescriptor<SchemaV1.PilotProfile>(
+                predicate: #Predicate<SchemaV1.PilotProfile> { $0.isActive == true }
+            )
+
+            if let activeProfiles = try? modelContext.fetch(descriptor),
+               let profile = activeProfiles.first {
+                var entries = profile.nightLandingEntries
+                entries.append(SchemaV1.NightLandingEntry(
+                    date: entry.date,
+                    count: entry.nightLandingCount
+                ))
+                profile.nightLandingEntries = entries
+            }
+        }
+    }
+
     /// Delete a logbook entry.
     func deleteEntry(_ entry: SchemaV1.LogbookEntry, modelContext: ModelContext) {
         modelContext.delete(entry)

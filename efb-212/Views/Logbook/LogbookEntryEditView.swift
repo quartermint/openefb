@@ -172,7 +172,7 @@ struct LogbookEntryEditView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Confirm") {
                         saveEntry()
-                        viewModel.confirmEntry(entry)
+                        viewModel.confirmEntryAndUpdateCurrency(entry, modelContext: modelContext)
                         dismiss()
                     }
                     .fontWeight(.semibold)

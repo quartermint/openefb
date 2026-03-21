@@ -17,6 +17,9 @@ struct ContentView: View {
     /// Number of non-current currency statuses for tab badge display.
     @State private var currencyBadgeCount: Int = 0
 
+    /// Number of unconfirmed logbook entries for tab badge display.
+    @State private var unconfirmedLogbookCount: Int = 0
+
     var body: some View {
         @Bindable var appState = appState
 
@@ -32,6 +35,7 @@ struct ContentView: View {
             Tab(AppTab.logbook.title, systemImage: AppTab.logbook.systemImage, value: .logbook) {
                 LogbookListView()
             }
+            .badge(unconfirmedLogbookCount)
 
             Tab(AppTab.aircraft.title, systemImage: AppTab.aircraft.systemImage, value: .aircraft) {
                 AircraftListView()
@@ -44,8 +48,13 @@ struct ContentView: View {
         }
         .onAppear {
             updateCurrencyBadge()
+            updateLogbookBadge()
         }
         .onChange(of: appState.activePilotProfileID) { _, _ in
+            updateCurrencyBadge()
+        }
+        .onChange(of: appState.selectedTab) { _, _ in
+            updateLogbookBadge()
             updateCurrencyBadge()
         }
     }
@@ -77,6 +86,16 @@ struct ContentView: View {
 
         currencyBadgeCount = count
     }
+
+    // MARK: - Logbook Badge Computation
+
+    /// Count unconfirmed logbook entries for tab badge display.
+    private func updateLogbookBadge() {
+        let descriptor = FetchDescriptor<SchemaV1.LogbookEntry>(
+            predicate: #Predicate<SchemaV1.LogbookEntry> { $0.isConfirmed == false }
+        )
+        unconfirmedLogbookCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+    }
 }
 
 #Preview {
@@ -86,6 +105,7 @@ struct ContentView: View {
             SchemaV1.AircraftProfile.self,
             SchemaV1.PilotProfile.self,
             SchemaV1.UserSettings.self,
-            SchemaV1.FlightPlanRecord.self
+            SchemaV1.FlightPlanRecord.self,
+            SchemaV1.LogbookEntry.self
         ])
 }
