@@ -12,6 +12,12 @@ A pilot can install the app, fly with it as their primary EFB, record their flig
 
 ### Validated
 
+Validated in Phase 2: Profiles + Flight Planning
+- [x] Basic flight planning: departure, destination, route on map, distance/time/fuel
+- [x] Aircraft profile: N-number, type, fuel capacity, burn rate, cruise speed, V-speeds
+- [x] Pilot profile: name, certificate, medical class/expiry, flight review date
+- [x] Currency tracking: medical expiry, flight review, night landings (61.57)
+
 Validated in Phase 1: Foundation + Navigation Core
 - [x] Moving map with GPS ownship tracking, ground speed, altitude, vertical speed, track
 - [x] VFR sectional chart raster overlay with opacity control
@@ -31,10 +37,6 @@ Validated in Phase 1: Foundation + Navigation Core
 
 ### Active
 
-- [ ] Basic flight planning: departure, destination, route on map, distance/time/fuel
-- [ ] Live TFR display from FAA data with proximity alerts (currently sample data)
-- [ ] Aircraft profile: N-number, type, fuel capacity, burn rate, cruise speed, V-speeds
-- [ ] Pilot profile: name, certificate, medical class/expiry, flight review date
 - [ ] One-tap flight recording: GPS track + cockpit audio + transcription
 - [ ] Auto-start recording when ground speed exceeds threshold
 - [ ] Cockpit-optimized audio engine (6+ hour recording, configurable quality)
@@ -131,7 +133,9 @@ Public TestFlight beta. VFR GA pilots, 50-150 hrs/year, iPad in cockpit. Must wo
 
 ## Current State
 
-Phase 1 complete — 25,071 US airports, moving map with MapLibre + VFR sectional overlay, NOAA weather, airspace/TFR boundaries, instrument strip, nearest airport HUD, airport search. 30+ Swift files, build verified on iPad Pro simulator.
+Phase 2 complete — Aircraft/pilot profiles with SwiftData, CurrencyService (FAR 61.23/61.56/61.57), A-to-B flight planning with magenta great-circle route, distance/ETE/fuel calculations, currency badges (green/yellow/red) on profile and tab icon. 23 new unit tests. Build verified.
+
+Phase 1 complete — 25,071 US airports, moving map with MapLibre + VFR sectional overlay, NOAA weather, airspace/TFR boundaries, instrument strip, nearest airport HUD, airport search.
 
 ---
-*Last updated: 2026-03-21 after Phase 1 completion*
+*Last updated: 2026-03-21 after Phase 2 completion*
