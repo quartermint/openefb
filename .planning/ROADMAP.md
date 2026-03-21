@@ -54,7 +54,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — SwiftData models (AircraftProfile, PilotProfile, FlightPlanRecord), CurrencyService with FAR 61.23/61.56/61.57, AppState profile state, unit tests
+- [x] 02-01-PLAN.md — SwiftData models (AircraftProfile, PilotProfile, FlightPlanRecord), CurrencyService with FAR 61.23/61.56/61.57, AppState profile state, unit tests
 - [ ] 02-02-PLAN.md — Aircraft/pilot profile views with CRUD, currency badges (green/yellow/red), night landing manual entry, Aircraft tab wiring
 - [ ] 02-03-PLAN.md — Flight planning: FlightPlanViewModel, MapService route layer (magenta great-circle line), FlightPlanView with airport search, summary card, Flights tab wiring
 

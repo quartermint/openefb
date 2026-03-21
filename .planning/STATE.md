@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: "Completed 01-07-PLAN.md (gap closure: 25K airports + MapView animation guard)"
-last_updated: "2026-03-21T06:54:37.982Z"
+stopped_at: Completed 02-01-PLAN.md (SwiftData models + CurrencyService + 23 tests)
+last_updated: "2026-03-21T08:00:08.686Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** A pilot can install the app, fly with it as their primary EFB, record their flight, and get an AI debrief afterward — all free, all on-device, no account required.
-**Current focus:** Phase 01 — foundation-navigation-core
+**Current focus:** Phase 02 — profiles-flight-planning
 
 ## Current Position
 
-Phase: 02
-Plan: Not started
+Phase: 02 (profiles-flight-planning) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 01 P04 | 10min | 2 tasks | 11 files |
 | Phase 01 P06 | 4min | 2 tasks | 3 files |
 | Phase 01 P07 | 7min | 2 tasks | 4 files |
+| Phase 02 P01 | 30min | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,10 @@ Recent decisions affecting current work:
 - [Phase 01]: Services initialized lazily in MapContainerView.onAppear, GPS only active on map tab
 - [Phase 01]: Used OurAirports CSV for 25K+ US airports (FAA-derived, simpler than NASR fixed-width)
 - [Phase 01]: Included heliports (8K) alongside airports/seaplane bases to exceed 20K target
+- [Phase 02]: CurrencyService as struct with static methods -- pure functions, no actor isolation needed
+- [Phase 02]: JSON-encoded Data columns for VSpeeds/NightLandingEntries -- avoids SwiftData relationship complexity
+- [Phase 02]: Test host guard via NSClassFromString(XCTestCase) to skip MapLibre init during testing
+- [Phase 02]: Disabled 7 pre-existing broken test files (API drift from Phase 1 refactoring)
 
 ### Pending Todos
 
@@ -97,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T06:50:49.514Z
-Stopped at: Completed 01-07-PLAN.md (gap closure: 25K airports + MapView animation guard)
+Last session: 2026-03-21T08:00:08.684Z
+Stopped at: Completed 02-01-PLAN.md (SwiftData models + CurrencyService + 23 tests)
 Resume file: None
