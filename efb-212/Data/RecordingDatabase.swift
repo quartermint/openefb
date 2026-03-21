@@ -233,7 +233,7 @@ final class RecordingDatabase: @unchecked Sendable {
     nonisolated func trackPoints(forFlight flightID: UUID) throws -> [TrackPointRecord] {
         try dbPool.read { db in
             try TrackPointRecord
-                .filter(Column("flightID") == flightID.uuidString)
+                .filter(Column("flightID") == flightID)
                 .order(Column("timestamp"))
                 .fetchAll(db)
         }
@@ -252,7 +252,7 @@ final class RecordingDatabase: @unchecked Sendable {
     nonisolated func transcriptSegments(forFlight flightID: UUID) throws -> [TranscriptSegmentRecord] {
         try dbPool.read { db in
             try TranscriptSegmentRecord
-                .filter(Column("flightID") == flightID.uuidString)
+                .filter(Column("flightID") == flightID)
                 .order(Column("timestamp"))
                 .fetchAll(db)
         }
@@ -272,7 +272,7 @@ final class RecordingDatabase: @unchecked Sendable {
         try dbPool.write { db in
             try db.execute(
                 sql: "UPDATE phase_markers SET endTimestamp = ? WHERE id = ?",
-                arguments: [endTimestamp.timeIntervalSinceReferenceDate, id.uuidString]
+                arguments: [endTimestamp.timeIntervalSinceReferenceDate, id]
             )
         }
     }
@@ -281,7 +281,7 @@ final class RecordingDatabase: @unchecked Sendable {
     nonisolated func phaseMarkers(forFlight flightID: UUID) throws -> [PhaseMarkerRecord] {
         try dbPool.read { db in
             try PhaseMarkerRecord
-                .filter(Column("flightID") == flightID.uuidString)
+                .filter(Column("flightID") == flightID)
                 .order(Column("startTimestamp"))
                 .fetchAll(db)
         }
@@ -297,7 +297,7 @@ final class RecordingDatabase: @unchecked Sendable {
             // Delete existing debrief for this flight (regeneration overwrite)
             try db.execute(
                 sql: "DELETE FROM debrief_results WHERE flightID = ?",
-                arguments: [record.flightID.uuidString]
+                arguments: [record.flightID]
             )
             try db.execute(
                 sql: """
@@ -307,8 +307,8 @@ final class RecordingDatabase: @unchecked Sendable {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                 arguments: [
-                    record.id.uuidString,
-                    record.flightID.uuidString,
+                    record.id,
+                    record.flightID,
                     record.narrativeSummary,
                     record.phaseObservationsJSON,
                     record.improvementsJSON,
@@ -325,7 +325,7 @@ final class RecordingDatabase: @unchecked Sendable {
     nonisolated func debrief(forFlight flightID: UUID) throws -> DebriefRecord? {
         try dbPool.read { db in
             try DebriefRecord
-                .filter(Column("flightID") == flightID.uuidString)
+                .filter(Column("flightID") == flightID)
                 .fetchOne(db)
         }
     }
@@ -333,7 +333,7 @@ final class RecordingDatabase: @unchecked Sendable {
     /// Delete the debrief for a specific flight.
     nonisolated func deleteDebrief(forFlight flightID: UUID) throws {
         try dbPool.write { db in
-            try db.execute(sql: "DELETE FROM debrief_results WHERE flightID = ?", arguments: [flightID.uuidString])
+            try db.execute(sql: "DELETE FROM debrief_results WHERE flightID = ?", arguments: [flightID])
         }
     }
 
@@ -342,9 +342,9 @@ final class RecordingDatabase: @unchecked Sendable {
     /// Delete all recording data for a specific flight (track points, transcripts, phase markers).
     nonisolated func deleteFlightData(flightID: UUID) throws {
         try dbPool.write { db in
-            try db.execute(sql: "DELETE FROM track_points WHERE flightID = ?", arguments: [flightID.uuidString])
-            try db.execute(sql: "DELETE FROM transcript_segments WHERE flightID = ?", arguments: [flightID.uuidString])
-            try db.execute(sql: "DELETE FROM phase_markers WHERE flightID = ?", arguments: [flightID.uuidString])
+            try db.execute(sql: "DELETE FROM track_points WHERE flightID = ?", arguments: [flightID])
+            try db.execute(sql: "DELETE FROM transcript_segments WHERE flightID = ?", arguments: [flightID])
+            try db.execute(sql: "DELETE FROM phase_markers WHERE flightID = ?", arguments: [flightID])
         }
     }
 }
