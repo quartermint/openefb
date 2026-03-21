@@ -81,6 +81,24 @@ final class AppState {
     var sharedDatabaseService: (any DatabaseServiceProtocol)?
     var sharedMapService: MapService?
 
+    // MARK: - Shared Recording Database
+
+    /// Shared RecordingDatabase instance -- avoids creating new instances per view.
+    /// Initialized lazily on first access (e.g., when FlightDetailView appears).
+    private(set) var sharedRecordingDatabase: RecordingDatabase?
+
+    func getOrCreateRecordingDatabase() -> RecordingDatabase? {
+        if sharedRecordingDatabase == nil {
+            sharedRecordingDatabase = try? RecordingDatabase()
+        }
+        return sharedRecordingDatabase
+    }
+
+    // MARK: - Currency Warning State
+
+    /// User dismissed currency warning banner for this session.
+    var currencyWarningDismissed: Bool = false
+
     // MARK: - System State
 
     var networkAvailable: Bool = false
