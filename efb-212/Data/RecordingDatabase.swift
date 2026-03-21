@@ -200,6 +200,23 @@ final class RecordingDatabase: @unchecked Sendable {
                 """)
             try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_phase_markers_flight ON phase_markers(flightID)")
         }
+        // v2: Add debrief_results table for AI-generated flight debriefs
+        migrator.registerMigration("v2_debrief") { db in
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS debrief_results (
+                    id TEXT PRIMARY KEY,
+                    flightID TEXT NOT NULL,
+                    narrativeSummary TEXT NOT NULL,
+                    phaseObservationsJSON TEXT NOT NULL,
+                    improvementsJSON TEXT NOT NULL,
+                    overallRating INTEGER NOT NULL,
+                    generatedAt REAL NOT NULL,
+                    promptTokensEstimate INTEGER,
+                    responseTokensEstimate INTEGER
+                )
+                """)
+            try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_debrief_results_flight ON debrief_results(flightID)")
+        }
         try migrator.migrate(dbPool)
     }
 
@@ -267,6 +284,56 @@ final class RecordingDatabase: @unchecked Sendable {
                 .filter(Column("flightID") == flightID.uuidString)
                 .order(Column("startTimestamp"))
                 .fetchAll(db)
+        }
+    }
+
+    // MARK: - Debrief CRUD
+
+    /// Insert or replace a debrief record.
+    /// Deletes any existing debrief for the same flight (one debrief per flight),
+    /// then inserts the new record. Supports regeneration overwrite.
+    nonisolated func insertDebrief(_ record: DebriefRecord) throws {
+        try dbPool.write { db in
+            // Delete existing debrief for this flight (regeneration overwrite)
+            try db.execute(
+                sql: "DELETE FROM debrief_results WHERE flightID = ?",
+                arguments: [record.flightID.uuidString]
+            )
+            try db.execute(
+                sql: """
+                    INSERT INTO debrief_results
+                    (id, flightID, narrativeSummary, phaseObservationsJSON, improvementsJSON,
+                     overallRating, generatedAt, promptTokensEstimate, responseTokensEstimate)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                arguments: [
+                    record.id.uuidString,
+                    record.flightID.uuidString,
+                    record.narrativeSummary,
+                    record.phaseObservationsJSON,
+                    record.improvementsJSON,
+                    record.overallRating,
+                    record.generatedAt.timeIntervalSinceReferenceDate,
+                    record.promptTokensEstimate,
+                    record.responseTokensEstimate
+                ]
+            )
+        }
+    }
+
+    /// Retrieve the debrief for a specific flight (single debrief per flight).
+    nonisolated func debrief(forFlight flightID: UUID) throws -> DebriefRecord? {
+        try dbPool.read { db in
+            try DebriefRecord
+                .filter(Column("flightID") == flightID.uuidString)
+                .fetchOne(db)
+        }
+    }
+
+    /// Delete the debrief for a specific flight.
+    nonisolated func deleteDebrief(forFlight flightID: UUID) throws {
+        try dbPool.write { db in
+            try db.execute(sql: "DELETE FROM debrief_results WHERE flightID = ?", arguments: [flightID.uuidString])
         }
     }
 
