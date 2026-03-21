@@ -22,6 +22,15 @@ final class MapViewModel {
     let mapService: MapService
     let databaseService: any DatabaseServiceProtocol
 
+    // MARK: - Plan 04 Dependencies (Weather, TFR, Proximity)
+
+    /// Optional weather service -- set by MapContainerView after creation.
+    var weatherService: (any WeatherServiceProtocol)?
+    /// Optional TFR service -- set by MapContainerView after creation.
+    var tfrService: TFRServiceProtocol?
+    /// Optional proximity alert service -- set by MapContainerView after creation.
+    var proximityAlertService: ProximityAlertService?
+
     // MARK: - State
 
     var visibleAirports: [Airport] = []
@@ -138,6 +147,10 @@ final class MapViewModel {
             switch layer {
             case .airports, .navaids, .airspace:
                 loadDataForRegion(center: appState.mapCenter, zoom: appState.mapZoom)
+            case .weatherDots:
+                Task { await loadWeatherDots() }
+            case .tfrs:
+                Task { await loadTFRs() }
             default:
                 break
             }
@@ -196,5 +209,60 @@ final class MapViewModel {
         }
 
         isLoadingAirports = false
+
+        // Load weather dots if layer visible (Plan 04)
+        if appState.visibleLayers.contains(.weatherDots) {
+            Task { await loadWeatherDots() }
+        }
+
+        // Load TFRs if layer visible (Plan 04)
+        if appState.visibleLayers.contains(.tfrs) {
+            Task { await loadTFRs() }
+        }
+    }
+
+    // MARK: - Weather Dot Loading (Plan 04)
+
+    /// Fetch weather for visible airports and update map weather dots.
+    func loadWeatherDots() async {
+        guard let weatherService else { return }
+        guard !visibleAirports.isEmpty else { return }
+
+        // Build station ID list and coordinate lookup from visible airports
+        let stationIDs = visibleAirports.map { $0.icao }
+        var stationCoordinates: [String: CLLocationCoordinate2D] = [:]
+        for airport in visibleAirports {
+            stationCoordinates[airport.icao] = airport.coordinate
+        }
+
+        do {
+            let weather = try await weatherService.fetchWeatherForStations(stationIDs)
+            mapService.updateWeatherDots(weather, stationCoordinates: stationCoordinates)
+        } catch {
+            // Weather fetch failure is non-critical -- dots just won't update
+        }
+    }
+
+    // MARK: - TFR Loading (Plan 04)
+
+    /// Fetch TFRs near current map center and update map TFR layer.
+    func loadTFRs() async {
+        guard let tfrService else { return }
+
+        do {
+            let tfrs = try await tfrService.activeTFRs()
+            mapService.updateTFRs(tfrs)
+        } catch {
+            // TFR fetch failure is non-critical
+        }
+    }
+
+    // MARK: - Proximity Alert Check (Plan 04)
+
+    /// Check airspace/TFR proximity for current ownship position.
+    /// Called from MapContainerView on GPS updates, throttled internally to 10s.
+    func checkProximityAlerts() {
+        guard let position = appState.ownshipPosition else { return }
+        proximityAlertService?.checkProximity(position: position, altitude: appState.altitude)
     }
 }
