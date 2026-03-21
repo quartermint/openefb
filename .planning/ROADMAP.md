@@ -51,12 +51,12 @@ Plans:
   2. Pilot can create and save a pilot profile (name, certificate number, medical class/expiry, flight review date) that persists across app launches
   3. Pilot can enter departure and destination airports (with search), see the route drawn on the map, and read estimated distance (nm), time, and fuel burn using their saved aircraft profile
   4. Pilot's profile screen shows green/yellow/red currency status for medical expiry, flight review date, and 61.57 night passenger-carrying requirements
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: SwiftData models — AircraftProfile, PilotProfile with VersionedSchema V1; CRUD views for each profile
-- [ ] 02-02: Flight planning — departure/destination airport search, route rendering on map, distance/ETE/fuel calculation from aircraft profile; FlightPlanState integration
-- [ ] 02-03: Currency tracking — computation from PilotProfile dates and logbook entries; currency status badges in profile view
+- [ ] 02-01-PLAN.md — SwiftData models (AircraftProfile, PilotProfile, FlightPlanRecord), CurrencyService with FAR 61.23/61.56/61.57, AppState profile state, unit tests
+- [ ] 02-02-PLAN.md — Aircraft/pilot profile views with CRUD, currency badges (green/yellow/red), night landing manual entry, Aircraft tab wiring
+- [ ] 02-03-PLAN.md — Flight planning: FlightPlanViewModel, MapService route layer (magenta great-circle line), FlightPlanView with airport search, summary card, Flights tab wiring
 
 ### Phase 3: Flight Recording Engine
 **Goal**: A pilot can start recording with one tap (or it auto-starts on takeoff), capturing GPS track and cockpit audio simultaneously with real-time transcription and automatic flight phase detection, and stop cleanly including after interruptions
@@ -128,8 +128,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Navigation Core | 6/7 | In Progress (gap closure) |  |
-| 2. Profiles + Flight Planning | 0/3 | Not started | - |
+| 1. Foundation + Navigation Core | 7/7 | Complete | 2026-03-21 |
+| 2. Profiles + Flight Planning | 0/3 | Planned | - |
 | 3. Flight Recording Engine | 0/3 | Not started | - |
 | 4. AI Debrief + Logbook | 0/4 | Not started | - |
 | 5. Track Replay | 0/2 | Not started | - |
