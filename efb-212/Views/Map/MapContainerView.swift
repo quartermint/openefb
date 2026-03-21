@@ -219,6 +219,28 @@ struct MapContainerView: View {
                     .padding(.bottom, 60)  // above instrument strip
                 }
             }
+
+            // MARK: Flight plan summary card overlay
+
+            if appState.activeFlightPlan,
+               let distance = appState.distanceToNext,
+               let departure = appState.activePlanDeparture,
+               let destination = appState.activePlanDestination {
+                VStack {
+                    Spacer()
+                    HStack {
+                        FlightPlanSummaryCard(
+                            distanceNM: distance,
+                            ete: formatETE(appState.estimatedTimeEnroute),
+                            fuelGallons: appState.activePlanFuelGallons,
+                            departure: departure,
+                            destination: destination
+                        )
+                        .padding()
+                        Spacer()
+                    }
+                }
+            }
         }
 
         // MARK: - Airport Info Sheet
@@ -307,6 +329,10 @@ struct MapContainerView: View {
         mapViewModel = vm
         proximityAlertService = proxService
 
+        // Share services via AppState for other tabs (Flight Plans, etc.)
+        appState.sharedDatabaseService = databaseService
+        appState.sharedMapService = mapService
+
         // LocationService -- starts GPS tracking
         let locService = LocationService(appState: appState)
         locationService = locService
@@ -324,6 +350,15 @@ struct MapContainerView: View {
         // Start reachability monitoring
         reachabilityService.start()
         appState.networkAvailable = reachabilityService.isConnected
+    }
+    // MARK: - Helpers
+
+    /// Format ETE seconds as "h:mm" for summary card display.
+    private func formatETE(_ seconds: TimeInterval?) -> String {
+        guard let seconds = seconds else { return "0:00" }
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        return String(format: "%d:%02d", hours, minutes)
     }
 }
 
