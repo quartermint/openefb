@@ -68,12 +68,12 @@ Plans:
   3. Cockpit audio records continuously for a 6+ hour flight at configurable quality without crashing or stopping; a simulated phone call interruption mid-flight resumes recording automatically
   4. Real-time transcript appears during flight with N-numbers, altitudes, headings, frequencies, and runway identifiers recognized correctly; only finalized (non-volatile) segments are stored
   5. Flight phase label (preflight / taxi / takeoff / departure / cruise / approach / landing / postflight) updates automatically based on GPS speed and altitude patterns during the flight
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: RecordingCoordinator actor — GPS track capture (CLLocationUpdate AsyncSequence, .airborne config), flight phase detection state machine, auto-start threshold logic, background location + audio session configuration
-- [ ] 03-02: Audio engine — AVAudioEngine with simultaneous file write + Speech framework buffer tap, 6-hour recording at configurable quality profiles, AVAudioSession interruption handling, headphone disconnect recovery
-- [ ] 03-03: SpeechAnalyzer integration — real-time transcription with volatile/final distinction (only isFinal == true to GRDB), aviation vocabulary post-processor (N-numbers, ATC phrases, altitudes, frequencies), GRDB transcript storage
+- [ ] 03-01-PLAN.md — Recording types, protocols, GRDB recording database, FlightRecord SwiftData model, RecordingCoordinator actor, FlightPhaseDetector state machine, TrackRecorder GPS capture, auto-start logic, Wave 0 tests
+- [ ] 03-02-PLAN.md — AudioRecorder with AVAudioEngine dual output (file write + buffer tap), audio quality profiles, AVAudioSession interruption handling, headphone disconnect recovery, Info.plist background modes
+- [ ] 03-03-PLAN.md — TranscriptionService with SpeechAnalyzer (iOS 26) + SFSpeechRecognizer fallback, AviationVocabularyProcessor, RecordingViewModel, RecordingOverlayView UI, MapContainerView wiring
 
 ### Phase 4: AI Debrief + Logbook
 **Goal**: After landing, a pilot can view an AI-generated post-flight debrief (narrative, per-phase observations, improvements, rating) on-device, confirm an auto-populated logbook entry, and see currency warnings if anything is approaching expiry
@@ -129,8 +129,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation + Navigation Core | 7/7 | Complete | 2026-03-21 |
-| 2. Profiles + Flight Planning | 0/3 | Planned | - |
-| 3. Flight Recording Engine | 0/3 | Not started | - |
+| 2. Profiles + Flight Planning | 3/3 | Complete | 2026-03-21 |
+| 3. Flight Recording Engine | 0/3 | Planned | - |
 | 4. AI Debrief + Logbook | 0/4 | Not started | - |
 | 5. Track Replay | 0/2 | Not started | - |
 | 6. Polish + TestFlight | 0/3 | Not started | - |
