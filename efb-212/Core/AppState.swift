@@ -2,148 +2,62 @@
 //  AppState.swift
 //  efb-212
 //
-//  Root state coordinator — ObservableObject injected as environmentObject.
-//  All types are @MainActor by default (SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor).
+//  Root state coordinator -- @Observable macro with @MainActor isolation.
+//  Injected into view hierarchy via .environment(appState).
+//  All sub-state properties organized by concern.
 //
 
-import SwiftUI
-import Combine
+import Observation
 import CoreLocation
 
-final class AppState: ObservableObject {
+@Observable
+@MainActor
+final class AppState {
 
-    // MARK: - Navigation
+    // MARK: - Navigation State
 
-    @Published var selectedTab: AppTab = .map
-    @Published var isPresentingAirportInfo: Bool = false
-    @Published var selectedAirportID: String?
+    var selectedTab: AppTab = .map
+    var isPresentingAirportInfo: Bool = false
+    var selectedAirportID: String?
+    var isPresentingLayerControls: Bool = false
+    var isPresentingNearestList: Bool = false
+    var searchQuery: String = ""
 
     // MARK: - Map State
 
-    @Published var mapCenter: CLLocationCoordinate2D = .init(latitude: 37.46, longitude: -122.12)
-    @Published var mapZoom: Double = 10.0
-    @Published var mapMode: MapMode = .northUp
-    @Published var visibleLayers: Set<MapLayer> = [.sectional, .airports, .ownship]
-    @Published var sectionalOpacity: Double = 0.85
+    var mapCenter: CLLocationCoordinate2D = .init(latitude: 39.0, longitude: -98.0)  // CONUS center
+    var mapZoom: Double = 5.0  // CONUS zoom level
+    var mapMode: MapMode = .northUp
+    var mapStyle: MapStyle = .vfrSectional
+    var visibleLayers: Set<MapLayer> = [.sectional, .airports, .ownship]
+    var sectionalOpacity: Double = 0.70  // 70% default per user decision
 
-    // MARK: - Location / Ownship
+    // MARK: - Location / Ownship State
 
-    @Published var ownshipPosition: CLLocation?
-    @Published var groundSpeed: Double = 0        // knots
-    @Published var altitude: Double = 0           // feet MSL
-    @Published var verticalSpeed: Double = 0      // feet per minute
-    @Published var track: Double = 0              // degrees true
+    var ownshipPosition: CLLocation?
+    var groundSpeed: Double = 0        // knots
+    var altitude: Double = 0           // feet MSL
+    var verticalSpeed: Double = 0      // feet per minute
+    var track: Double = 0              // degrees true
+    var gpsAvailable: Bool = false
+    var firstLocationReceived: Bool = false  // prevents re-animation after initial GPS fix
 
-    // MARK: - Recording (Phase 2 stub)
+    // MARK: - Flight Plan State (for instrument strip DTG/ETE)
 
-    @Published var isRecording: Bool = false
-    @Published var recordingDuration: TimeInterval = 0
-    @Published var currentFlightPhase: String = "Idle"
+    var activeFlightPlan: Bool = false
+    var distanceToNext: Double?        // nautical miles
+    var estimatedTimeEnroute: TimeInterval?  // seconds
+    var directToAirport: Airport?
 
-    // MARK: - Flight Plan
+    // MARK: - System State
 
-    @Published var activeFlightPlan: FlightPlan?
-    @Published var distanceToNext: Double?        // nautical miles
-    @Published var estimatedTimeEnroute: TimeInterval?
-
-    // MARK: - System
-
-    @Published var batteryLevel: Double = 1.0
-    @Published var powerState: PowerState = .normal
-    @Published var gpsAvailable: Bool = false
-    @Published var networkAvailable: Bool = false
-
-    // MARK: - Injected Services (protocol-based DI)
-
-    // LocationManagerProtocol is AnyObject (not Sendable), so nonisolated is fine
-    nonisolated let locationManager: any LocationManagerProtocol
-    nonisolated let databaseManager: any DatabaseManagerProtocol
-    nonisolated let weatherService: any WeatherServiceProtocol
-
-    /// PowerManager for battery monitoring — created internally.
-    let powerManager = PowerManager()
-
-    private var cancellables = Set<AnyCancellable>()
-
-    /// 1 m/s = 1.94384 knots
-    private static let metersPerSecondToKnots: Double = 1.94384
-
-    /// 1 meter = 3.28084 feet
-    private static let metersToFeet: Double = 3.28084
+    var networkAvailable: Bool = false
+    var batteryLevel: Double = 1.0
+    var powerState: PowerState = .normal
 
     // MARK: - Init
 
-    init(
-        locationManager: any LocationManagerProtocol,
-        databaseManager: any DatabaseManagerProtocol,
-        weatherService: any WeatherServiceProtocol
-    ) {
-        self.locationManager = locationManager
-        self.databaseManager = databaseManager
-        self.weatherService = weatherService
-
-        // Load seed airports on launch (idempotent)
-        databaseManager.loadSeedDataIfNeeded()
-
-        subscribeToLocationUpdates()
-        subscribeToPowerManager()
-    }
-
-    // MARK: - Location Subscription
-
-    /// Subscribes to location updates and pipes aviation-unit values into published state.
-    /// This drives the InstrumentStrip (GS, ALT, VS, TRK) in real-time.
-    private func subscribeToLocationUpdates() {
-        var previousLocation: CLLocation?
-
-        locationManager.locationPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] location in
-                guard let self else { return }
-
-                self.ownshipPosition = location
-                self.gpsAvailable = true
-
-                // Ground speed — knots
-                if location.speed >= 0 {
-                    self.groundSpeed = location.speed * Self.metersPerSecondToKnots
-                }
-
-                // Altitude — feet MSL
-                self.altitude = location.altitude * Self.metersToFeet
-
-                // Track — degrees true (CLLocation.course, -1 if invalid)
-                if location.course >= 0 {
-                    self.track = location.course
-                }
-
-                // Vertical speed — feet per minute from successive samples
-                if let prev = previousLocation {
-                    let timeDelta = location.timestamp.timeIntervalSince(prev.timestamp)
-                    if timeDelta > 0.1 {
-                        let altDeltaFeet = (location.altitude - prev.altitude) * Self.metersToFeet
-                        self.verticalSpeed = (altDeltaFeet / timeDelta) * 60.0  // fpm
-                    }
-                }
-
-                // Update map center to follow ownship
-                self.mapCenter = location.coordinate
-
-                previousLocation = location
-            }
-            .store(in: &cancellables)
-    }
-
-    // MARK: - Power Manager Subscription
-
-    /// Subscribes to PowerManager to keep AppState battery level and power state current.
-    private func subscribeToPowerManager() {
-        powerManager.$batteryLevel
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$batteryLevel)
-
-        powerManager.$powerState
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$powerState)
+    init() {
+        // Default init -- services will be wired in later plans
     }
 }

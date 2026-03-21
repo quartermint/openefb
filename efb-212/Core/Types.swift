@@ -3,6 +3,7 @@
 //  efb-212
 //
 //  Shared enums and lightweight types used across the app.
+//  All types are Sendable for safe use across concurrency domains.
 //
 
 import Foundation
@@ -10,7 +11,7 @@ import CoreLocation
 
 // MARK: - Navigation
 
-enum AppTab: String, CaseIterable {
+enum AppTab: String, CaseIterable, Sendable {
     case map, flights, logbook, aircraft, settings
 
     var title: String {
@@ -34,12 +35,21 @@ enum AppTab: String, CaseIterable {
     }
 }
 
-enum MapMode: String, CaseIterable {
+enum MapMode: String, CaseIterable, Sendable {
     case northUp    // Map always oriented north
     case trackUp    // Map rotates to heading
 }
 
-enum MapLayer: String, CaseIterable {
+/// Map visual style — distinct from MapMode (north-up/track-up orientation).
+/// Controls the base map layer rendering.
+enum MapStyle: String, CaseIterable, Sendable {
+    case vfrSectional   // FAA VFR sectional chart raster overlay
+    case street         // Street map base layer
+    case satellite      // Satellite imagery
+    case terrain        // Terrain/topographic
+}
+
+enum MapLayer: String, CaseIterable, Sendable {
     case sectional      // VFR sectional chart overlay
     case airports       // Airport dots/icons
     case airspace       // Airspace boundaries
@@ -52,10 +62,10 @@ enum MapLayer: String, CaseIterable {
 
 // MARK: - Power
 
-enum PowerState: String, CaseIterable {
+enum PowerState: String, CaseIterable, Sendable {
     case normal           // Full functionality
-    case batteryConscious // < 20% — reduce non-essential services
-    case emergency        // < 10% — minimum viable operation
+    case batteryConscious // < 20% -- reduce non-essential services
+    case emergency        // < 10% -- minimum viable operation
 
     var gpsUpdateInterval: TimeInterval {
         switch self {
@@ -84,20 +94,20 @@ enum PowerState: String, CaseIterable {
 
 // MARK: - Aviation Enums
 
-enum AirportType: String, Codable, CaseIterable {
+enum AirportType: String, Codable, CaseIterable, Sendable {
     case airport
     case heliport
     case seaplane
     case ultralight
 }
 
-enum OwnershipType: String, Codable, CaseIterable {
+enum OwnershipType: String, Codable, CaseIterable, Sendable {
     case publicOwned = "public"
     case privateOwned = "private"
     case military
 }
 
-enum SurfaceType: String, Codable, CaseIterable {
+enum SurfaceType: String, Codable, CaseIterable, Sendable {
     case asphalt
     case concrete
     case turf
@@ -107,13 +117,13 @@ enum SurfaceType: String, Codable, CaseIterable {
     case other
 }
 
-enum LightingType: String, Codable, CaseIterable {
+enum LightingType: String, Codable, CaseIterable, Sendable {
     case none
     case partTime
     case fullTime
 }
 
-enum FrequencyType: String, Codable, CaseIterable {
+enum FrequencyType: String, Codable, CaseIterable, Sendable {
     case ctaf
     case tower
     case ground
@@ -126,7 +136,7 @@ enum FrequencyType: String, Codable, CaseIterable {
     case multicom
 }
 
-enum NavaidType: String, Codable, CaseIterable {
+enum NavaidType: String, Codable, CaseIterable, Sendable {
     case vor
     case vortac
     case vorDme
@@ -143,7 +153,7 @@ enum TFRType: String, Codable, CaseIterable, Sendable {
     case other          // Catch-all
 }
 
-enum AirspaceClass: String, Codable, CaseIterable {
+enum AirspaceClass: String, Codable, CaseIterable, Sendable {
     case bravo
     case charlie
     case delta
@@ -157,7 +167,7 @@ enum AirspaceClass: String, Codable, CaseIterable {
     case tfr
 }
 
-enum FlightCategory: String, Codable, CaseIterable {
+enum FlightCategory: String, Codable, CaseIterable, Sendable {
     case vfr      // Ceiling > 3000 AGL AND visibility > 5 SM
     case mvfr     // Ceiling 1000-3000 AGL OR visibility 3-5 SM
     case ifr      // Ceiling 500-999 AGL OR visibility 1-3 SM
@@ -173,7 +183,7 @@ enum FlightCategory: String, Codable, CaseIterable {
     }
 }
 
-enum WaypointType: String, Codable, CaseIterable {
+enum WaypointType: String, Codable, CaseIterable, Sendable {
     case airport
     case navaid
     case fix
@@ -183,7 +193,7 @@ enum WaypointType: String, Codable, CaseIterable {
 
 // MARK: - Error Severity
 
-enum ErrorSeverity {
+enum ErrorSeverity: Sendable {
     case critical   // Red banner, persistent until resolved
     case error      // Red toast, auto-dismiss after 5s
     case warning    // Yellow toast, auto-dismiss after 3s
@@ -192,14 +202,14 @@ enum ErrorSeverity {
 
 // MARK: - Lightweight Structs
 
-struct WindInfo: Codable, Equatable {
+struct WindInfo: Codable, Equatable, Sendable {
     let direction: Int       // degrees true (0 = variable)
     let speed: Int           // knots
     let gusts: Int?          // knots (nil if no gusts)
     let isVariable: Bool
 }
 
-struct BoundingBox: Codable, Equatable {
+struct BoundingBox: Codable, Equatable, Sendable {
     let minLatitude: Double
     let maxLatitude: Double
     let minLongitude: Double
@@ -213,25 +223,25 @@ struct BoundingBox: Codable, Equatable {
     }
 }
 
-struct VSpeeds: Codable, Equatable {
-    var vr: Int?     // Rotation speed — knots
-    var vx: Int?     // Best angle of climb — knots
-    var vy: Int?     // Best rate of climb — knots
-    var va: Int?     // Maneuvering speed — knots
-    var vne: Int?    // Never exceed — knots
-    var vfe: Int?    // Max flap extended — knots
-    var vs0: Int?    // Stall speed landing config — knots
-    var vs1: Int?    // Stall speed clean — knots
+struct VSpeeds: Codable, Equatable, Sendable {
+    var vr: Int?     // Rotation speed -- knots
+    var vx: Int?     // Best angle of climb -- knots
+    var vy: Int?     // Best rate of climb -- knots
+    var va: Int?     // Maneuvering speed -- knots
+    var vne: Int?    // Never exceed -- knots
+    var vfe: Int?    // Max flap extended -- knots
+    var vs0: Int?    // Stall speed landing config -- knots
+    var vs1: Int?    // Stall speed clean -- knots
 }
 
-enum MedicalClass: String, Codable, CaseIterable {
+enum MedicalClass: String, Codable, CaseIterable, Sendable {
     case first
     case second
     case third
     case basicMed
 }
 
-enum CertificateType: String, Codable, CaseIterable {
+enum CertificateType: String, Codable, CaseIterable, Sendable {
     case student
     case sport
     case recreational

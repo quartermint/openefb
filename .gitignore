@@ -21,3 +21,6 @@ Packages/
 # Environment
 .env
 .env.local
+
+# Archived old code (pre-@Observable rewrite reference)
+_archive/
