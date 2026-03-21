@@ -98,11 +98,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Pilot opens a past flight and taps Play; a position marker follows the recorded GPS track on the map in real time at controllable playback speed
   2. As the position marker moves, cockpit audio plays in sync and the transcript scrolls to the matching segment; scrubbing the audio timeline moves both the map position and transcript position
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Track replay engine — AVAudioPlayer playback, GPS track animation synchronized to audio position, playback speed control, timeline scrub synchronization
-- [ ] 05-02: Flight history UI — flight list view sorted by date, flight detail view with map replay + transcript + debrief summary, integration with logbook
+- [ ] 05-01-PLAN.md — ReplayEngine (@Observable time model with AVAudioPlayer sync, GPS interpolation, transcript matching), MapService replay track/marker layers, unit tests
+- [ ] 05-02-PLAN.md — Replay UI (ReplayView, ReplayMapView, TranscriptPanelView, TimelineScrubBar), FlightHistoryListView, FlightDetailView Replay button, Flights tab Plans/History segmented control
 
 ### Phase 6: Polish + TestFlight
 **Goal**: The app passes Apple privacy review, performs well on real iPad hardware, and is live on public TestFlight for VFR pilots to install and test
@@ -131,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Profiles + Flight Planning | 3/3 | Complete | 2026-03-21 |
 | 3. Flight Recording Engine | 3/3 | Complete | 2026-03-21 |
 | 4. AI Debrief + Logbook | 0/3 | Planned | - |
-| 5. Track Replay | 0/2 | Not started | - |
+| 5. Track Replay | 0/2 | Planned | - |
 | 6. Polish + TestFlight | 0/3 | Not started | - |
 
 ---
