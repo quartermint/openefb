@@ -250,6 +250,13 @@ enum CertificateType: String, Codable, CaseIterable, Sendable {
     case atp
 }
 
+/// Currency status for FAR 61.23 (medical), 61.56 (flight review), 61.57 (night).
+enum CurrencyStatus: String, Codable, CaseIterable, Sendable {
+    case current    // green: > 30 days remaining
+    case warning    // yellow: <= 30 days remaining
+    case expired    // red: past expiration
+}
+
 // MARK: - Airspace Geometry
 
 enum AirspaceGeometry: Codable, Equatable, Sendable {

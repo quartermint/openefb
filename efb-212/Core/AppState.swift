@@ -49,6 +49,11 @@ final class AppState {
     var estimatedTimeEnroute: TimeInterval?  // seconds
     var directToAirport: Airport?
 
+    // MARK: - Profile State
+
+    var activeAircraftProfileID: UUID?
+    var activePilotProfileID: UUID?
+
     // MARK: - System State
 
     var networkAvailable: Bool = false

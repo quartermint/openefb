@@ -13,7 +13,9 @@ import SwiftData
 
 enum SchemaV1: VersionedSchema {
     static var versionIdentifier = Schema.Version(1, 0, 0)
-    static var models: [any PersistentModel.Type] { [UserSettings.self] }
+    static var models: [any PersistentModel.Type] {
+        [UserSettings.self, AircraftProfile.self, PilotProfile.self, FlightPlanRecord.self]
+    }
 
     @Model
     final class UserSettings {
@@ -25,6 +27,15 @@ enum SchemaV1: VersionedSchema {
 
         /// Weather auto-refresh interval in seconds (default: 15 minutes).
         var weatherRefreshInterval: Double = 900
+
+        /// UUID string of active aircraft profile (persists across launches).
+        var activeAircraftID: String?
+
+        /// UUID string of active pilot profile (persists across launches).
+        var activePilotID: String?
+
+        /// UUID string of last used flight plan (for auto-load on launch).
+        var lastFlightPlanID: String?
 
         /// Date this settings record was created.
         var createdAt: Date = Date()
