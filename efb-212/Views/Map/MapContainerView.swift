@@ -71,6 +71,10 @@ struct MapContainerView: View {
     @State private var proximityAlertService: ProximityAlertService?
     @State private var reachabilityService = ReachabilityService()
 
+    // Recording Services (Plan 03)
+    @State private var recordingViewModel: RecordingViewModel?
+    @State private var recordingCoordinator: RecordingCoordinator?
+
     // MARK: - Local UI State
 
     @State private var showingSearch: Bool = false
@@ -186,6 +190,12 @@ struct MapContainerView: View {
                         .padding(.horizontal, 16)
                         .padding(.bottom, 8)
                 }
+            }
+
+            // MARK: Layer 3 -- Recording overlay
+
+            if let recVM = recordingViewModel {
+                RecordingOverlayView(viewModel: recVM)
             }
 
             // MARK: Layer controls popover
@@ -350,6 +360,58 @@ struct MapContainerView: View {
         // Start reachability monitoring
         reachabilityService.start()
         appState.networkAvailable = reachabilityService.isConnected
+
+        // Recording services (Plan 03)
+        initializeRecordingServices()
+    }
+
+    /// Initialize recording pipeline: RecordingDatabase -> AudioRecorder -> TranscriptionService -> RecordingCoordinator -> RecordingViewModel.
+    private func initializeRecordingServices() {
+        do {
+            let recordingDB = try RecordingDatabase()
+            let audioRecorder = AudioRecorder()
+            let transcriptionService = TranscriptionService(recordingDB: recordingDB)
+
+            let coordinator = RecordingCoordinator(
+                recordingDB: recordingDB,
+                audioRecorder: audioRecorder,
+                transcriptionService: transcriptionService
+            )
+
+            // Wire AudioRecorder's onBufferAvailable to TranscriptionService's feedBuffer
+            Task {
+                await audioRecorder.setOnBufferAvailable { @Sendable buffer, time in
+                    Task {
+                        await transcriptionService.feedBuffer(buffer, time: time)
+                    }
+                }
+            }
+
+            // Wire TranscriptionService's onTranscriptUpdate to coordinator state
+            let coordState = coordinator.state
+            Task {
+                await transcriptionService.setOnTranscriptUpdate { @Sendable item in
+                    Task { @MainActor in
+                        coordState.recentTranscripts.append(item)
+                        // Keep only last 5 segments
+                        if coordState.recentTranscripts.count > 5 {
+                            coordState.recentTranscripts.removeFirst(
+                                coordState.recentTranscripts.count - 5
+                            )
+                        }
+                    }
+                }
+            }
+
+            recordingCoordinator = coordinator
+            recordingViewModel = RecordingViewModel(coordinator: coordinator, appState: appState)
+
+            // Start auto-start monitoring
+            Task { await coordinator.startAutoStartMonitoring(appState: appState) }
+        } catch {
+            // Recording database failed -- recording won't be available but app still works
+            // This is not a fatal error
+        }
     }
     // MARK: - Helpers
 

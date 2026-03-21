@@ -72,6 +72,18 @@ actor TranscriptionService: TranscriptionServiceProtocol {
         self.recordingDB = recordingDB
     }
 
+    // MARK: - Callback Setters
+
+    /// Set the transcript update callback (called from MapContainerView wiring).
+    func setOnTranscriptUpdate(_ callback: (@Sendable (TranscriptDisplayItem) -> Void)?) {
+        onTranscriptUpdate = callback
+    }
+
+    /// Set the current flight phase provider (called from RecordingCoordinator wiring).
+    func setCurrentPhaseProvider(_ provider: (@Sendable () async -> FlightPhaseType)?) {
+        currentPhaseProvider = provider
+    }
+
     // MARK: - TranscriptionServiceProtocol
 
     var isTranscribing: Bool {
