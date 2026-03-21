@@ -31,14 +31,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Pilot taps any airport on the map and sees runways (length/width/surface), radio frequencies, field elevation, current METAR with flight category color, and TAF; weather dot color coding is visible on the map; all weather data shows a staleness badge
   4. Pilot can toggle airspace boundaries (Class B/C/D with floor/ceiling labels), TFR polygons, weather dots, navaids, and airports on and off; proximity alerts fire when approaching Class B/C/D or an active TFR
   5. Pilot taps nearest airport to get a sorted list with distance, bearing, runways, and one-tap direct-to; instrument strip shows GS/ALT/VSI/TRK/DTG/ETE updating from GPS
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 01-01: Xcode project setup — bundle ID, Swift 6.2, iOS 26 target, SPM dependencies (MapLibre, GRDB, SwiftData), @Observable AppState with decomposed sub-states, SwiftData VersionedSchema V1
-- [ ] 01-02: Aviation database — bundled SQLite with 20K+ NASR airports, GRDB R-tree spatial index, FTS5 search, navaid table, airspace geometry table; AviationDatabase actor
-- [ ] 01-03: Map layer — MapLibre SwiftUI integration, GeoJSON sources for airports/navaids/airspace/TFRs, ownship layer, VFR sectional raster overlay, layer toggles, map mode selector
-- [ ] 01-04: Weather + airspace services — NOAA METAR/TAF bulk fetch with 15-min cache, flight category color coding, FAA TFR live data, Class B/C/D proximity alerts, TFR proximity alerts
-- [ ] 01-05: Navigation features — instrument strip (GS/ALT/VSI/TRK/DTG/ETE from CLLocationUpdate AsyncSequence), nearest airport R-tree query, background location, offline capability + reachability monitoring
+- [ ] 01-01-PLAN.md — @Observable AppState, shared types, domain models, service protocols, SwiftData V1 schema, app entry point
+- [ ] 01-02-PLAN.md — Aviation database: bundled SQLite with NASR airports, GRDB R-tree spatial index, FTS5 search, NASR importer tool
+- [ ] 01-03-PLAN.md — Map layer: MapLibre UIViewRepresentable, GeoJSON sources, ownship GPS, VFR sectional overlay, layer toggles, LocationService
+- [ ] 01-04-PLAN.md — Weather + airspace: NOAA METAR/TAF service, TFR service, proximity alerts, reachability, airport info sheet
+- [ ] 01-05-PLAN.md — Navigation: instrument strip, nearest airport HUD, airport search, MapContainerView final assembly
 
 ### Phase 2: Profiles + Flight Planning
 **Goal**: A pilot can enter their aircraft specs and certificate information, create a basic A→B flight plan with fuel and time calculations, and check their currency status before flying
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Navigation Core | 0/5 | Not started | - |
+| 1. Foundation + Navigation Core | 0/5 | Planned | - |
 | 2. Profiles + Flight Planning | 0/3 | Not started | - |
 | 3. Flight Recording Engine | 0/3 | Not started | - |
 | 4. AI Debrief + Logbook | 0/4 | Not started | - |
