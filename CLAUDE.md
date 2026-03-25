@@ -160,11 +160,15 @@ efb-212/
 4. New SPM dependencies require updating the Xcode project file
 5. Visual verification (Section 19) is required before any sprint is "done"
 
-## Current Project State
+## Current State (as of 2026-03)
 
-- **Scaffolding:** Fresh Xcode template (SwiftUI + SwiftData, iOS 26.0)
-- **Existing files:** `efb_212App.swift`, `ContentView.swift`, `Item.swift` (boilerplate)
-- **To replace:** `Item.swift` → aviation data models; `ContentView.swift` → tab-based navigation
-- **No dependencies added yet** — MapLibre, SwiftNASR, GRDB all need to be added via SPM
-- **No tests implemented yet** — test targets exist but are empty
-- **Next step:** Sprint 1 — foundation, project structure, database setup, basic tab navigation
+**Status:** Active development — Sprint 1-3 complete
+**Last Active:** February 2026
+**Built:** 61 Swift files, 215+ tests, 3,700 airports seeded. Moving map with VFR sectional overlay, airport database with R-tree spatial queries, METAR/TAF weather service, nearest airport emergency HUD, flight planning, instrument strip, airspace boundaries, TFR service.
+**Next:** Phase 2 — blocked on SFR package extraction (flight recording) and Apple Foundation Models (AI debrief)
+
+## Known Issues
+
+- Phase 2 depends on extracting SFR code into reusable SPM packages (not yet done)
+- Apple Foundation Models availability for on-device AI debrief TBD
+- SFR code reuse requires adding `public` access modifiers to extracted packages
