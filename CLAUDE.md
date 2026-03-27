@@ -172,3 +172,10 @@ efb-212/
 - Phase 2 depends on extracting SFR code into reusable SPM packages (not yet done)
 - Apple Foundation Models availability for on-device AI debrief TBD
 - SFR code reuse requires adding `public` access modifiers to extracted packages
+
+## Ecosystem Role
+
+- **Tier:** T1 / Perception
+- **Produces:** Flight telemetry and navigation data (local SwiftData)
+- **Vault pipeline:** Not yet connected to lifevault
+- **Throughline ref:** See ~/throughline/architecture/data-flows.md
