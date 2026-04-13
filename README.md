@@ -61,13 +61,11 @@ ForeFlight costs $120-360/yr. Every data source it uses -- FAA airports, VFR sec
 ```bash
 git clone https://github.com/quartermint/openefb.git
 cd openefb
-open openefb.xcodeproj
+open efb-212.xcodeproj
 
 # Select iPad simulator or connected device -> Cmd+R
 # Run tests: Cmd+U
 ```
-
-> **Note:** The Xcode project is currently named `efb-212.xcodeproj` (pending rename). Open with `open efb-212.xcodeproj` until the project file is updated.
 
 ## Project Structure
 
