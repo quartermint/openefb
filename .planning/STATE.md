@@ -2,14 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-stopped_at: Completed 06-01-PLAN.md (Privacy manifest + validation tests)
-last_updated: "2026-03-21T20:25:51.416Z"
+status: complete
+milestone_status: complete
+completed_at: "2026-05-23"
+stopped_at: Completed 06-03-PLAN.md (Phase 06 polish + TestFlight)
+last_updated: "2026-05-23T00:00:00.000Z"
 progress:
-  total_phases: 7
-  completed_phases: 5
-  total_plans: 21
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 20
   completed_plans: 20
+notes: |
+  Phase 999.1-ads-b-in-integration is a deferred future-work stub (empty directory)
+  intentionally not part of v1.0 scope per ROADMAP.md (6 phases).
 ---
 
 # Project State
