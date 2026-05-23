@@ -179,3 +179,13 @@ efb-212/
 - **Produces:** Flight telemetry and navigation data (local SwiftData)
 - **Vault pipeline:** Not yet connected to lifevault
 - **Throughline ref:** See ~/throughline/architecture/data-flows.md
+
+## Swift/iOS Patterns (session-mined)
+
+- SPM (`swift build`) is faster than xcodebuild for device testing when team provisioning is unavailable; use `-destination` flag with device identifier
+- xcodegen overwrites entitlements/Info.plist on regen — specify them in `project.yml`, never edit the generated files
+- SourceKit cross-file errors are IDE noise, not compile failures — acknowledge but don't investigate; `swift build` is the truth
+- Type explosion (2x error spike) after a large edit almost always = duplicate type definitions; check `PlaceholderImplementations.swift` or stub files first
+- iOS 26 beta: 7-16s WebContent launch time is OS-level; `NSInvalidArgumentException nil` on WebContent is an OS bug, not your code
+- iOS Bonjour/mDNS discovery silently fails without local network permission — trigger the prompt with a short-lived UDP NWConnection to a LAN address before starting NWBrowser
+- iOS app version in UI won't update after OTA deploy if old app is cached — uninstall and reinstall
