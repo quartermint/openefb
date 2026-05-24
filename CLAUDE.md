@@ -180,6 +180,23 @@ efb-212/
 - **Vault pipeline:** Not yet connected to lifevault
 - **Throughline ref:** See ~/throughline/architecture/data-flows.md
 
+## Design System
+
+**Always read `DESIGN.md` before making any visual or UI decision.** All typography, color, spacing, layout, motion, and component rules are defined there.
+
+Key invariants enforced in code review:
+- Typography is **B612** (open-source Airbus aviation font) — never Inter, Roboto, system-ui, SF as primary
+- Color is a **three-mode system** — Paper-Day (sunlight) / Dark-Dusk (low-light) / Red-Night (true 635nm, blue channel ≤ 0x08)
+- Brand/action accent is **sectional magenta `#D81B60`** (Paper-Day) / `#FF3D7A` (Dark-Dusk) / `#FF5A35` (Red-Night). Never enterprise blue.
+- Tabular numerics for every nav readout (`tnum` ON, B612 Mono)
+- In-flight tap targets: 56pt minimum (44pt floor for non-flight UI)
+- No `Color.white`, no `#FFF`, no `Color.blue` in cockpit UI — use mode tokens
+- Mode switches are **instant** (no crossfade); no motion on critical readouts in Red-Night
+
+The memorable feeling we are designing for: **"This was built by someone who actually flies."** When a design decision is borderline, ask whether it serves that line. If not, push back.
+
+In QA mode, flag any UI code that violates DESIGN.md without explicit user approval.
+
 ## Swift/iOS Patterns (session-mined)
 
 - SPM (`swift build`) is faster than xcodebuild for device testing when team provisioning is unavailable; use `-destination` flag with device identifier

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "openefb",
+  "compatibility_date": "2026-05-23",
+  "pages_build_output_dir": "."
+}

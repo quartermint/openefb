@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="paper-day">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenEFB — Open-Source iPad VFR Electronic Flight Bag</title>
+<meta name="description" content="An open-source iPad VFR EFB built by someone who actually flies. Three color modes for cockpit reality: sunlight, dusk, and red-preserving night.">
+<meta name="theme-color" content="#D81B60">
+<link rel="canonical" href="https://openefb.quartermint.com/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OpenEFB">
+<meta property="og:title" content="OpenEFB — An EFB built by someone who actually flies.">
+<meta property="og:description" content="Open-source iPad VFR moving map, flight recording, and AI debrief. Three color modes for the cockpit you actually fly in.">
+<meta property="og:url" content="https://openefb.quartermint.com/">
+<meta property="og:image" content="https://openefb.quartermint.com/variant-A-paper-day.webp">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="1024">
+<meta property="og:image:alt" content="OpenEFB moving-map screen on an iPad in a cockpit, showing sectional chart with magenta airspace and tabular instrument readouts">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@quartermint">
+<meta name="twitter:title" content="OpenEFB — An EFB built by someone who actually flies.">
+<meta name="twitter:description" content="Open-source iPad VFR EFB. Paper-day for sunlight, dark-dusk for evening, true 635 nm red-night for dark adaptation.">
+<meta name="twitter:image" content="https://openefb.quartermint.com/variant-A-paper-day.webp">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap">
+<style>
+/* ============================================================
+   OpenEFB — DESIGN.md tokens
+   Three modes: paper-day (default) / dark-dusk / red-night
+   ============================================================ */
+
+:root {
+  /* Typography (mode-agnostic) */
+  --font-display: 'B612', system-ui, sans-serif;
+  --font-body: 'B612', system-ui, sans-serif;
+  --font-mono: 'B612 Mono', ui-monospace, monospace;
+
+  /* Type scale */
+  --t-xs: 13px;
+  --t-sm: 15px;
+  --t-base: 16px;
+  --t-md: 18px;
+  --t-lg: 22px;
+  --t-xl: 28px;
+  --t-2xl: 32px;
+  --t-3xl: 44px;
+  --t-hero: clamp(40px, 6.5vw, 84px);
+
+  /* Spacing scale */
+  --sp-2xs: 2px;
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-base: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 48px;
+  --sp-3xl: 64px;
+  --sp-4xl: 96px;
+
+  /* Radius */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+
+  /* Motion */
+  --m-micro: 80ms ease-out;
+  --m-short: 150ms ease-out;
+  --m-exit: 100ms ease-in;
+}
+
+/* ============================================================
+   PAPER-DAY MODE (default) — sunlight readable
+   ============================================================ */
+html[data-mode="paper-day"] {
+  --chassis: #1A1D1F;
+  --surface: #F4EFE5;
+  --surface-2: #E8E2D4;
+  --ink: #0F1112;
+  --ink-muted: #4A5258;
+  --ink-on-accent: #F4EFE5;
+  --hairline: #B9B1A1;
+  --accent: #D81B60;
+  --accent-soft: rgba(216, 27, 96, 0.12);
+  --data-cyan: #0077A8;
+  --caution: #B8541A;
+  --warning: #B9251A;
+  --ok: #2F7A4C;
+}
+
+/* ============================================================
+   DARK-DUSK MODE — low-light, AMOLED-friendly
+   ============================================================ */
+html[data-mode="dark-dusk"] {
+  --chassis: #000000;
+  --surface: #0E1216;
+  --surface-2: #161C21;
+  --ink: #F4EFE5;
+  --ink-muted: #9AA3AA;
+  --ink-on-accent: #0E1216;
+  --hairline: #2B353C;
+  --accent: #FF3D7A;
+  --accent-soft: rgba(255, 61, 122, 0.16);
+  --data-cyan: #4AB3E0;
+  --caution: #E0A040;
+  --warning: #E25B4E;
+  --ok: #4ECB89;
+}
+
+/* ============================================================
+   RED-NIGHT MODE — true 635nm, blue channel clamped
+   ============================================================ */
+html[data-mode="red-night"] {
+  --chassis: #050000;
+  --surface: #0E0000;
+  --surface-2: #1A0303;
+  --ink: #FF3A1F;
+  --ink-muted: #9E1808;
+  --ink-on-accent: #050000;
+  --hairline: #3A0907;
+  --accent: #FF5A35;
+  --accent-soft: rgba(255, 90, 53, 0.16);
+  --data-cyan: #FF3A1F;     /* re-mapped: no cyan in night */
+  --caution: #FF5A35;
+  --warning: #FF7048;
+  --ok: #FF3A1F;
+}
+
+/* ============================================================
+   Base reset
+   ============================================================ */
+*,
+*::before,
+*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--surface);
+  font-feature-settings: "ss01", "tnum" 0; /* tnum enabled only where needed */
+  transition: background var(--m-short), color var(--m-short);
+  min-height: 100vh;
+}
+
+html[data-mode="red-night"] body { transition: none; /* instant mode switch */ }
+
+/* Tabular numerics where it matters */
+.mono,
+.instrument-value,
+.metric,
+[data-tnum] {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1, "ss01" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* Selection */
+::selection { background: var(--accent); color: var(--ink-on-accent); }
+
+/* ============================================================
+   Top instrument strip — the brand signature
+   Sticky, 56pt tall, matches the in-app instrument strip
+   ============================================================ */
+.instrument-strip {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--chassis);
+  color: var(--surface);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  height: 56px;
+  padding: 0 var(--sp-base);
+  border-bottom: 1.5px solid var(--hairline);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-md);
+  letter-spacing: 0.02em;
+  color: var(--surface);
+}
+
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+}
+
+.instrument-readouts {
+  display: flex;
+  gap: 0;
+  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.instrument-readouts::-webkit-scrollbar { display: none; }
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 var(--sp-base);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  min-width: 88px;
+  flex-shrink: 0;
+}
+.readout:last-child { border-right: none; }
+
+.readout-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(244, 239, 229, 0.55);
+  text-transform: uppercase;
+}
+
+.readout-value {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-size: var(--t-md);
+  font-weight: 700;
+  color: var(--surface);
+  line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .instrument-readouts { display: none; }
+}
+
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  padding: var(--sp-sm) var(--sp-md);
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: var(--r-md);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 40px;
+  transition: background var(--m-micro), color var(--m-micro);
+}
+.mode-toggle:hover { background: var(--accent); color: var(--ink-on-accent); }
+.mode-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ============================================================
+   Section scaffold
+   ============================================================ */
+.section {
+  padding: var(--sp-4xl) var(--sp-lg);
+  border-bottom: 1px solid var(--hairline);
+}
+.section-inner { max-width: 1240px; margin: 0 auto; }
+
+.kicker {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: var(--t-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+.kicker::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 1.5px;
+  background: var(--accent);
+}
+
+.section-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-3xl);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  max-width: 24ch;
+  margin-bottom: var(--sp-lg);
+}
+
+.section-lede {
+  font-size: var(--t-lg);
+  line-height: 1.45;
+  color: var(--ink-muted);
+  max-width: 60ch;
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+.hero {
+  padding: var(--sp-4xl) var(--sp-lg) var(--sp-3xl);
+  background: var(--surface);
+}
+.hero-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: var(--sp-4xl);
+  align-items: center;
+}
+@media (max-width: 960px) {
+  .hero-inner { grid-template-columns: 1fr; gap: var(--sp-2xl); }
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: var(--t-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+.hero-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 32px;
+  height: 1.5px;
+  background: var(--accent);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-hero);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: var(--sp-lg);
+}
+.hero-title em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.hero-sub {
+  font-size: var(--t-lg);
+  line-height: 1.45;
+  color: var(--ink-muted);
+  max-width: 44ch;
+  margin-bottom: var(--sp-xl);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-xl);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-sm);
+  padding: 0 var(--sp-lg);
+  min-height: 56px;
+  min-width: 180px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--accent);
+  cursor: pointer;
+  transition: background var(--m-micro), transform var(--m-micro);
+}
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent); color: var(--ink-on-accent); }
+.btn-primary:hover { background: var(--ink); border-color: var(--ink); }
+.btn-secondary { background: transparent; color: var(--accent); }
+.btn-secondary:hover { background: var(--accent-soft); }
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-lg);
+  padding-top: var(--sp-lg);
+  border-top: 1px solid var(--hairline);
+}
+.hero-meta-item { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-muted); letter-spacing: 0.06em; }
+.hero-meta-item strong { color: var(--ink); font-weight: 700; }
+
+.hero-visual {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 0 var(--hairline), 0 24px 64px -16px rgba(15, 17, 18, 0.18);
+  background: var(--chassis);
+}
+.hero-visual img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.hero-visual-caption {
+  position: absolute;
+  left: var(--sp-md);
+  bottom: var(--sp-md);
+  background: rgba(15, 17, 18, 0.85);
+  color: #F4EFE5;
+  padding: var(--sp-xs) var(--sp-md);
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   Three Modes section
+   ============================================================ */
+.modes {
+  background: var(--surface-2);
+}
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-lg);
+  margin-top: var(--sp-2xl);
+}
+@media (max-width: 960px) {
+  .modes-grid {
+    grid-template-columns: 1fr;
+    gap: var(--sp-xl);
+  }
+}
+
+.mode-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.mode-card-image {
+  background: var(--chassis);
+  border-bottom: 1px solid var(--hairline);
+}
+.mode-card-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mode-card-body {
+  padding: var(--sp-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  flex: 1;
+}
+.mode-card-tag {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.mode-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-lg);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.mode-card-body p {
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+.mode-card-trigger {
+  margin-top: auto;
+  padding-top: var(--sp-md);
+  border-top: 1px dashed var(--hairline);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink);
+  font-feature-settings: "tnum" 1;
+}
+.mode-card-trigger strong { color: var(--accent); }
+
+/* ============================================================
+   Why Three Modes (editorial)
+   ============================================================ */
+.why-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: var(--sp-3xl);
+  align-items: start;
+  margin-top: var(--sp-2xl);
+}
+@media (max-width: 880px) {
+  .why-grid { grid-template-columns: 1fr; gap: var(--sp-xl); }
+}
+
+.why-stat {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  padding: var(--sp-lg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  margin-bottom: var(--sp-md);
+}
+.why-stat-num {
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.why-stat-label {
+  font-size: var(--t-xs);
+  color: var(--ink-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.why-body p {
+  font-size: var(--t-md);
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: var(--sp-md);
+}
+.why-body p + p { margin-top: 0; }
+.why-body strong { color: var(--accent); font-weight: 700; }
+.why-body em { font-style: italic; color: var(--ink-muted); }
+
+/* ============================================================
+   Type Specimen — B612 at every scale
+   ============================================================ */
+.specimen {
+  background: var(--surface);
+}
+.specimen-rows {
+  margin-top: var(--sp-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.specimen-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--sp-xl);
+  align-items: baseline;
+  padding: var(--sp-md) 0;
+  border-bottom: 1px solid var(--hairline);
+}
+@media (max-width: 640px) {
+  .specimen-row { grid-template-columns: 1fr; gap: var(--sp-xs); }
+}
+.specimen-meta {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: var(--t-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.specimen-sample {
+  font-family: var(--font-display);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.specimen-sample.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: 0;
+}
+
+/* ============================================================
+   Color Tokens — three palettes
+   ============================================================ */
+.tokens {
+  background: var(--surface-2);
+}
+.tokens-tabs {
+  display: flex;
+  gap: var(--sp-sm);
+  margin-top: var(--sp-2xl);
+  margin-bottom: var(--sp-lg);
+  flex-wrap: wrap;
+}
+.tokens-tab {
+  padding: var(--sp-sm) var(--sp-md);
+  border: 1.5px solid var(--hairline);
+  background: transparent;
+  color: var(--ink);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 44px;
+}
+.tokens-tab[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  border-color: var(--accent);
+}
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--sp-md);
+}
+.swatch {
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+}
+.swatch-color { height: 96px; }
+.swatch-body {
+  padding: var(--sp-md);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.swatch-name {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+.swatch-hex {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11px;
+  color: var(--ink-muted);
+  letter-spacing: 0.06em;
+}
+.swatch-use {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: var(--sp-xs);
+  line-height: 1.3;
+}
+
+/* ============================================================
+   Open Source
+   ============================================================ */
+.opensource-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3xl);
+  align-items: start;
+  margin-top: var(--sp-2xl);
+}
+@media (max-width: 880px) { .opensource-grid { grid-template-columns: 1fr; gap: var(--sp-xl); } }
+
+.opensource-body p {
+  font-size: var(--t-md);
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: var(--sp-md);
+}
+.opensource-body strong { color: var(--accent); }
+
+.code-block {
+  background: var(--chassis);
+  color: var(--surface);
+  border-radius: var(--r-md);
+  padding: var(--sp-lg);
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  overflow-x: auto;
+  border-left: 4px solid var(--accent);
+}
+.code-block .comment { color: rgba(244, 239, 229, 0.45); }
+.code-block .key { color: var(--accent); }
+
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-md);
+}
+.fact {
+  padding: var(--sp-md);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+}
+.fact-num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: var(--t-xl);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.fact-label {
+  font-size: var(--t-xs);
+  color: var(--ink-muted);
+  margin-top: var(--sp-xs);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.foot {
+  background: var(--chassis);
+  color: var(--surface);
+  padding: var(--sp-3xl) var(--sp-lg);
+}
+.foot-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: var(--sp-xl);
+}
+@media (max-width: 880px) { .foot-inner { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .foot-inner { grid-template-columns: 1fr; } }
+
+.foot-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--t-md);
+  letter-spacing: 0.02em;
+}
+.foot-tag {
+  font-size: var(--t-xs);
+  color: rgba(244, 239, 229, 0.55);
+  margin-top: var(--sp-sm);
+  max-width: 36ch;
+  line-height: 1.5;
+}
+.foot-col-label {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(244, 239, 229, 0.55);
+  margin-bottom: var(--sp-md);
+}
+.foot-col ul { list-style: none; }
+.foot-col li { margin-bottom: var(--sp-xs); }
+.foot-col a {
+  color: var(--surface);
+  text-decoration: none;
+  font-size: var(--t-sm);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--m-micro);
+}
+.foot-col a:hover { border-color: var(--accent); }
+
+.foot-legal {
+  max-width: 1240px;
+  margin: var(--sp-xl) auto 0;
+  padding-top: var(--sp-lg);
+  border-top: 1px solid rgba(244, 239, 229, 0.12);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-md);
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11px;
+  color: rgba(244, 239, 229, 0.55);
+  letter-spacing: 0.08em;
+}
+
+/* ============================================================
+   Pretext target — element gets height set by Pretext layout()
+   ============================================================ */
+[data-pretext] {
+  /* will-be-overridden height; allow Pretext to compute */
+  display: block;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus rings */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     STICKY INSTRUMENT STRIP HEADER (the brand component)
+     ============================================================ -->
+<header class="instrument-strip" role="banner">
+  <a href="#top" class="brand" aria-label="OpenEFB home">
+    <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2 L22 19 L12 15 L2 19 Z" fill="currentColor"/>
+    </svg>
+    OpenEFB
+  </a>
+
+  <div class="instrument-readouts" aria-label="Live demo nav data">
+    <div class="readout"><span class="readout-label">GS</span><span class="readout-value" id="gs">124 KT</span></div>
+    <div class="readout"><span class="readout-label">ALT</span><span class="readout-value" id="alt">3 500 FT</span></div>
+    <div class="readout"><span class="readout-label">HDG</span><span class="readout-value" id="hdg">087°</span></div>
+    <div class="readout"><span class="readout-label">ETE</span><span class="readout-value" id="ete">00:24</span></div>
+    <div class="readout"><span class="readout-label">DIS</span><span class="readout-value" id="dis">47.2 NM</span></div>
+  </div>
+
+  <button class="mode-toggle" type="button" id="mode-toggle" aria-label="Cycle display mode">
+    <span id="mode-icon" aria-hidden="true">☀️</span>
+    <span id="mode-label">Paper-Day</span>
+  </button>
+</header>
+
+<a id="top"></a>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">v1.0 · MPL-2.0 · iPadOS 26+</div>
+      <h1 class="hero-title">
+        An EFB built<br>
+        by someone who<br>
+        <em>actually flies.</em>
+      </h1>
+      <p class="hero-sub" data-pretext>
+        Open-source VFR moving map, flight recording, and AI debrief for iPad. Three color modes for the cockpit you actually fly in — paper-day for sunlight, dusk for the descent into the airport, true 635 nm red to keep your night vision intact.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/quartermint/openefb" aria-label="View OpenEFB on GitHub">
+          <span aria-hidden="true">★</span> Star on GitHub
+        </a>
+        <a class="btn btn-secondary" href="#modes">See the three modes</a>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><strong>MPL-2.0</strong> license</div>
+        <div class="hero-meta-item"><strong>iPad</strong> native</div>
+        <div class="hero-meta-item"><strong>SwiftUI</strong> + MapLibre</div>
+        <div class="hero-meta-item"><strong>NOAA</strong> weather, free</div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <img src="variant-A-paper-day.webp" alt="OpenEFB moving-map screen, paper-day mode, showing sectional chart with magenta airspace, cyan controlled airspace, ownship aircraft symbol, instrument strip at top, tool rail at left, action dock at bottom" id="hero-img">
+      <div class="hero-visual-caption">Paper-Day · Moving Map</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     THREE MODES
+     ============================================================ -->
+<section class="section modes" id="modes">
+  <div class="section-inner">
+    <div class="kicker">01 — Three Modes, Not Two</div>
+    <h2 class="section-heading">Cockpit lighting is a tri-state problem. We treat it that way.</h2>
+    <p class="section-lede" data-pretext>
+      Every other EFB ships light and dark. We ship paper-day for direct sunlight, dark-dusk for evening flight, and a true red-night mode that protects your dark-adapted eyes. Auto-switching by ambient light, civil twilight, and GPS position — with manual override that never gets overridden.
+    </p>
+
+    <div class="modes-grid">
+      <article class="mode-card" data-mode-target="paper-day">
+        <div class="mode-card-image">
+          <img src="variant-A-paper-day.webp" alt="OpenEFB in paper-day mode">
+        </div>
+        <div class="mode-card-body">
+          <div class="mode-card-tag">☀️ Paper-Day</div>
+          <h3 class="mode-card-title">Sunlight readable</h3>
+          <p data-pretext>Cockpit sunlight at altitude can exceed 100 000 lux. AMOLED dark mode loses there — the iPad's glass reflects more than it emits. Paper-day inverts the contrast model: warm sectional paper, black ink, magenta airspace continuity. Designed to win at 1 000 nits.</p>
+          <div class="mode-card-trigger">Triggers <strong>&gt; 1 000 lux</strong> ambient, default daylight</div>
+        </div>
+      </article>
+
+      <article class="mode-card" data-mode-target="dark-dusk">
+        <div class="mode-card-image">
+          <img src="variant-B-dark-dusk.webp" alt="OpenEFB in dark-dusk mode">
+        </div>
+        <div class="mode-card-body">
+          <div class="mode-card-tag">🌆 Dark-Dusk</div>
+          <h3 class="mode-card-title">Low-light, AMOLED matte</h3>
+          <p data-pretext>What most apps call dark mode. We use it for the dusk-to-evening window: civil twilight, hangar, dim cabin. True black on AMOLED for power and contrast, warm-white text that matches paper-day's ink color so your eye never has to recalibrate.</p>
+          <div class="mode-card-trigger">Triggers <strong>civil twilight</strong> through <strong>1 000 lux</strong></div>
+        </div>
+      </article>
+
+      <article class="mode-card" data-mode-target="red-night">
+        <div class="mode-card-image">
+          <img src="variant-C-red-night.webp" alt="OpenEFB in red-night mode">
+        </div>
+        <div class="mode-card-body">
+          <div class="mode-card-tag">🌙 Red-Night</div>
+          <h3 class="mode-card-title">635 nm, dark-adaptation safe</h3>
+          <p data-pretext>True red phosphor at 635 to 660 nm. The blue channel of every visible pixel is clamped to 0x08 or lower — enforced in the SwiftUI color layer, not optional. No motion on critical readouts. No gradients. No glows. Your cones stay shut down so you can see outside the airplane.</p>
+          <div class="mode-card-trigger">Triggers <strong>civil night</strong> + pilot opt-in</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     WHY THREE MODES (editorial)
+     ============================================================ -->
+<section class="section why">
+  <div class="section-inner">
+    <div class="kicker">02 — The Cockpit Reality</div>
+    <h2 class="section-heading">The physics that ate every other EFB.</h2>
+
+    <div class="why-grid">
+      <div class="why-stats">
+        <div class="why-stat">
+          <div class="why-stat-num">100 000+</div>
+          <div class="why-stat-label">Lux at altitude in direct sun</div>
+        </div>
+        <div class="why-stat">
+          <div class="why-stat-num">~1 000</div>
+          <div class="why-stat-label">Peak iPad nits, your screen</div>
+        </div>
+        <div class="why-stat">
+          <div class="why-stat-num">≤ 0x08</div>
+          <div class="why-stat-label">Blue channel cap, red-night mode</div>
+        </div>
+        <div class="why-stat">
+          <div class="why-stat-num">56 pt</div>
+          <div class="why-stat-label">In-flight tap target minimum</div>
+        </div>
+      </div>
+
+      <div class="why-body">
+        <p data-pretext>
+          A cockpit at altitude is one of the brightest environments your eyes ever inhabit. Direct sun through a clear canopy can deliver more than <strong>100 000 lux</strong> at the iPad's glass. Your screen, fighting back at roughly <em>1 000 nits</em>, becomes more reflective than emissive — and that's the moment AMOLED dark mode quietly betrays you. White text on black turns into a mirror you can barely read.
+        </p>
+        <p data-pretext>
+          The traditional EFB answer is to crank the brightness and squint. The right answer is to flip the contrast model. <strong>High-contrast warm paper with black ink</strong> outperforms dark mode under direct sun by a margin that's not subtle. So paper-day isn't a theme choice. It's the only mode that solves the actual problem.
+        </p>
+        <p data-pretext>
+          The other end is harder. Night VFR depends on dark adaptation, and dark adaptation depends on starving your cones — particularly the blue-sensitive ones. Cockpit instrument backlighting has used red phosphor at <strong>635 to 660 nanometers</strong> for half a century for exactly this reason. Our red-night mode honors that physics: a hard cap on the blue channel of every visible pixel, no animations, no glows, no gradients. <em>The mode is an invariant, not a theme.</em>
+        </p>
+        <p data-pretext>
+          And in between, the dusk window — that hour when your eyes are halfway adapted, the cabin is darker than the sky, and a traditional bright-white EFB blinds you for the descent. That's what dark-dusk is for. Three modes because the cockpit has three lighting problems, and pretending it has two is how every other EFB ends up with pilots manually dimming the iPad to <em>5%</em> at 1 AM.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TYPE SPECIMEN — B612
+     ============================================================ -->
+<section class="section specimen">
+  <div class="section-inner">
+    <div class="kicker">03 — Typography</div>
+    <h2 class="section-heading">B612. The font Airbus open-sourced for cockpit screens.</h2>
+    <p class="section-lede" data-pretext>
+      Designed by Intactile DESIGN and Airbus for the actual problem: arm's-length legibility on aircraft displays under vibration and glare. Distinct slashed zero, unambiguous 1/I/l, wide aperture, true tabular numerics. SIL OFL licensed, ships with the app. Every other EFB uses Helvetica, Univers, or the system font. We don't.
+    </p>
+
+    <div class="specimen-rows">
+      <div class="specimen-row">
+        <div class="specimen-meta">Display · 84 px / B612 Bold</div>
+        <div class="specimen-sample" style="font-size:84px;font-weight:700;line-height:0.95">CLEARED DIRECT</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">3xl · 44 px / B612 Bold</div>
+        <div class="specimen-sample" style="font-size:44px;font-weight:700;line-height:1.05">Squawk one two zero zero</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">2xl · 32 px / B612 Mono Bold</div>
+        <div class="specimen-sample mono" style="font-size:32px;font-weight:700">ALT 7 500 · HDG 268° · GS 142 KT</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">xl · 28 px / B612 Mono Medium</div>
+        <div class="specimen-sample mono" style="font-size:28px">CTAF 122.800 · ATIS 118.250 · GND 121.700</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">lg · 22 px / B612 Regular</div>
+        <div class="specimen-sample" style="font-size:22px">Direct to KAPA via JEFCO, then BJC. Cleared as filed.</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">base · 16 px / B612 Regular</div>
+        <div class="specimen-sample" style="font-size:16px">Body text floor. Never thinner than Regular in flight UI — vibration eats hairlines and you read this with one hand on the yoke.</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">tnum · zero · digits</div>
+        <div class="specimen-sample mono" style="font-size:28px">0123456789 · 0 vs O · 1 vs l vs I</div>
+      </div>
+      <div class="specimen-row">
+        <div class="specimen-meta">Aviation chips</div>
+        <div class="specimen-sample mono" style="font-size:14px;letter-spacing:0.12em">VFR · IFR · TFR · ADS-B · MOA · CTAF · ATIS · NOTAM</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     COLOR TOKENS
+     ============================================================ -->
+<section class="section tokens">
+  <div class="section-inner">
+    <div class="kicker">04 — Color System</div>
+    <h2 class="section-heading">Every hex value, three modes, no compromise.</h2>
+    <p class="section-lede" data-pretext>
+      The sectional chart's magenta is our brand color in every mode — visual continuity from chart to chrome. Class B cyan is preserved in paper-day and dark-dusk per FAA convention. In red-night, everything re-maps to red because dark adaptation overrides convention.
+    </p>
+
+    <div class="tokens-tabs" role="tablist">
+      <button class="tokens-tab" role="tab" aria-pressed="true" data-tab="paper-day">☀️ Paper-Day</button>
+      <button class="tokens-tab" role="tab" aria-pressed="false" data-tab="dark-dusk">🌆 Dark-Dusk</button>
+      <button class="tokens-tab" role="tab" aria-pressed="false" data-tab="red-night">🌙 Red-Night</button>
+    </div>
+
+    <div class="swatch-grid" id="swatch-grid">
+      <!-- Populated by JS based on tab -->
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     OPEN SOURCE PITCH
+     ============================================================ -->
+<section class="section opensource">
+  <div class="section-inner">
+    <div class="kicker">05 — The Moat is Open</div>
+    <h2 class="section-heading">Every EFB used to be a black box. We're the box you can open.</h2>
+
+    <div class="opensource-grid">
+      <div class="opensource-body">
+        <p data-pretext>
+          ForeFlight, Garmin Pilot, FltPlan Go — every category leader is closed source, subscription-locked, and built for the enterprise dispatch buyer first, the pilot second. <strong>OpenEFB is for the pilot first.</strong> MPL-2.0, contributions welcome, no telemetry, no upsell, no premium tier hiding the actually-useful features.
+        </p>
+        <p data-pretext>
+          The aviation community already builds the data. NOAA publishes the weather. The FAA publishes the charts and the airport database. SkyVector parses them. <em>The only thing missing has been an EFB the community actually owns.</em>
+        </p>
+        <p data-pretext>
+          We're not trying to dethrone ForeFlight. We're trying to give every pilot who wants one a tool that respects their flight, their eyes, their cockpit, and their wallet.
+        </p>
+        <div class="facts">
+          <div class="fact"><div class="fact-num">7 000+</div><div class="fact-label">LOC from sovereign-flight-recorder</div></div>
+          <div class="fact"><div class="fact-num">3 700</div><div class="fact-label">US airports seeded</div></div>
+          <div class="fact"><div class="fact-num">215+</div><div class="fact-label">Test cases</div></div>
+          <div class="fact"><div class="fact-num">MPL-2.0</div><div class="fact-label">License</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="code-block" role="region" aria-label="Build instructions">
+<span class="comment"># Clone, build, fly.</span>
+git clone https://github.com/<br>
+&nbsp;&nbsp;quartermint/openefb.git<br>
+cd openefb<br>
+open openefb.xcodeproj<br>
+<span class="comment"># Cmd+R in Xcode. Pick your iPad.</span><br>
+<br>
+<span class="comment"># Or contribute.</span>
+<span class="key">make</span> test<br>
+<span class="key">git</span> checkout -b feature/<br>
+&nbsp;&nbsp;your-better-altimeter<br>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="foot">
+  <div class="foot-inner">
+    <div>
+      <div class="foot-brand">OpenEFB</div>
+      <p class="foot-tag">An open-source iPad VFR Electronic Flight Bag. Built by someone who actually flies. A Quartermint project.</p>
+    </div>
+    <div class="foot-col">
+      <div class="foot-col-label">Product</div>
+      <ul>
+        <li><a href="#modes">Three modes</a></li>
+        <li><a href="#">TestFlight</a></li>
+        <li><a href="#">Release notes</a></li>
+        <li><a href="#">Roadmap</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <div class="foot-col-label">Code</div>
+      <ul>
+        <li><a href="https://github.com/quartermint/openefb">GitHub</a></li>
+        <li><a href="#">Issues</a></li>
+        <li><a href="#">Discussions</a></li>
+        <li><a href="#">DESIGN.md</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <div class="foot-col-label">Quartermint</div>
+      <ul>
+        <li><a href="https://quartermint.com">quartermint.com</a></li>
+        <li><a href="#">Other projects</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">@quartermint</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-legal">
+    <span>© 2026 Quartermint LLC · MPL-2.0</span>
+    <span>B612 typography © Airbus / Intactile DESIGN, SIL OFL</span>
+    <span>Not for navigation. VFR situational awareness only.</span>
+  </div>
+</footer>
+
+<!-- ============================================================
+     PRETEXT WIRING + INTERACTIVITY
+     ============================================================ -->
+<script type="module">
+  import { prepare, layout } from './pretext.js';
+
+  /* ----- Color token data ----- */
+  const TOKENS = {
+    'paper-day': [
+      { name: 'chassis',    hex: '#1A1D1F', use: 'gunmetal frame, header chrome' },
+      { name: 'surface',    hex: '#F4EFE5', use: 'sectional warm paper canvas' },
+      { name: 'surface-2',  hex: '#E8E2D4', use: 'raised panel, sidebar fill' },
+      { name: 'ink',        hex: '#0F1112', use: 'primary text, hairlines' },
+      { name: 'ink-muted',  hex: '#4A5258', use: 'secondary text, captions' },
+      { name: 'hairline',   hex: '#B9B1A1', use: 'dividers, panel rules' },
+      { name: 'accent',     hex: '#D81B60', use: 'sectional magenta, brand' },
+      { name: 'data-cyan',  hex: '#0077A8', use: 'Class B, IFR routing' },
+      { name: 'caution',    hex: '#B8541A', use: 'advisory amber' },
+      { name: 'warning',    hex: '#B9251A', use: 'alert red' },
+      { name: 'ok',         hex: '#2F7A4C', use: 'recording, in-spec' },
+    ],
+    'dark-dusk': [
+      { name: 'chassis',    hex: '#000000', use: 'AMOLED pixel-off black' },
+      { name: 'surface',    hex: '#0E1216', use: 'raised panel' },
+      { name: 'surface-2',  hex: '#161C21', use: 'secondary panel' },
+      { name: 'ink',        hex: '#F4EFE5', use: 'warm white, matches paper-day' },
+      { name: 'ink-muted',  hex: '#9AA3AA', use: 'secondary text' },
+      { name: 'hairline',   hex: '#2B353C', use: 'dividers' },
+      { name: 'accent',     hex: '#FF3D7A', use: 'magenta brightened for dark' },
+      { name: 'data-cyan',  hex: '#4AB3E0', use: 'Class B in dark mode' },
+      { name: 'caution',    hex: '#E0A040', use: 'advisory' },
+      { name: 'warning',    hex: '#E25B4E', use: 'alert' },
+      { name: 'ok',         hex: '#4ECB89', use: 'success' },
+    ],
+    'red-night': [
+      { name: 'chassis',    hex: '#050000', use: 'near-pure black' },
+      { name: 'surface',    hex: '#0E0000', use: 'raised panel' },
+      { name: 'surface-2',  hex: '#1A0303', use: 'secondary panel' },
+      { name: 'ink',        hex: '#FF3A1F', use: 'primary readouts, 635 nm' },
+      { name: 'ink-muted',  hex: '#9E1808', use: 'secondary, dimmed' },
+      { name: 'hairline',   hex: '#3A0907', use: 'dividers' },
+      { name: 'accent',     hex: '#FF5A35', use: 'active, ownship, tap' },
+      { name: 'warning',    hex: '#FF7048', use: 'alert, brightest tier' },
+    ],
+  };
+
+  /* ----- Mode toggle ----- */
+  const MODES = ['paper-day', 'dark-dusk', 'red-night'];
+  const MODE_META = {
+    'paper-day':  { icon: '☀️', label: 'Paper-Day',  hero: 'variant-A-paper-day.webp',  cap: 'Paper-Day · Moving Map'  },
+    'dark-dusk':  { icon: '🌆', label: 'Dark-Dusk',  hero: 'variant-B-dark-dusk.webp',  cap: 'Dark-Dusk · Moving Map'  },
+    'red-night':  { icon: '🌙', label: 'Red-Night',  hero: 'variant-C-red-night.webp',  cap: 'Red-Night · Moving Map'  },
+  };
+
+  const root = document.documentElement;
+  const toggle = document.getElementById('mode-toggle');
+  const modeIcon = document.getElementById('mode-icon');
+  const modeLabel = document.getElementById('mode-label');
+  const heroImg = document.getElementById('hero-img');
+  const heroCap = document.querySelector('.hero-visual-caption');
+
+  function setMode(m) {
+    root.setAttribute('data-mode', m);
+    modeIcon.textContent = MODE_META[m].icon;
+    modeLabel.textContent = MODE_META[m].label;
+    heroImg.src = MODE_META[m].hero;
+    heroCap.textContent = MODE_META[m].cap;
+    // Update tokens table to reflect active tab if it's syncing
+    const activeTab = document.querySelector('.tokens-tab[data-tab="' + m + '"]');
+    if (activeTab) {
+      document.querySelectorAll('.tokens-tab').forEach(t => t.setAttribute('aria-pressed', String(t === activeTab)));
+      renderSwatches(m);
+    }
+    try { localStorage.setItem('openefb-mode', m); } catch (e) {}
+  }
+
+  toggle.addEventListener('click', () => {
+    const cur = root.getAttribute('data-mode') || 'paper-day';
+    const next = MODES[(MODES.indexOf(cur) + 1) % MODES.length];
+    setMode(next);
+  });
+
+  /* Restore saved mode */
+  try {
+    const saved = localStorage.getItem('openefb-mode');
+    if (saved && MODES.includes(saved)) setMode(saved);
+  } catch (e) {}
+
+  /* ----- Mode card click — sets app mode to that card's mode ----- */
+  document.querySelectorAll('[data-mode-target]').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => setMode(card.dataset.modeTarget));
+  });
+
+  /* ----- Tokens tabs ----- */
+  function renderSwatches(mode) {
+    const grid = document.getElementById('swatch-grid');
+    const list = TOKENS[mode];
+    grid.innerHTML = list.map(t => `
+      <div class="swatch">
+        <div class="swatch-color" style="background:${t.hex}"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">${t.name}</div>
+          <div class="swatch-hex">${t.hex.toUpperCase()}</div>
+          <div class="swatch-use">${t.use}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.querySelectorAll('.tokens-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tokens-tab').forEach(t => t.setAttribute('aria-pressed', String(t === tab)));
+      renderSwatches(tab.dataset.tab);
+    });
+  });
+
+  renderSwatches('paper-day');
+
+  /* ----- Live instrument-strip demo: realistic drift ----- */
+  let gs = 124, alt = 3500, hdg = 87, ete = 1440, dis = 47.2;
+  function tickInstruments() {
+    gs += (Math.random() - 0.5) * 0.8;
+    gs = Math.max(95, Math.min(165, gs));
+    alt += (Math.random() - 0.5) * 6;
+    alt = Math.max(2800, Math.min(4200, alt));
+    hdg += (Math.random() - 0.5) * 0.6;
+    hdg = ((hdg % 360) + 360) % 360;
+    ete = Math.max(0, ete - 1);
+    dis = Math.max(0, dis - 0.04);
+
+    document.getElementById('gs').textContent  = `${Math.round(gs)} KT`;
+    document.getElementById('alt').textContent = `${Math.round(alt).toLocaleString('en-US').replace(',', ' ')} FT`;
+    document.getElementById('hdg').textContent = `${String(Math.round(hdg)).padStart(3, '0')}°`;
+    const m = Math.floor(ete / 60);
+    const s = ete % 60;
+    document.getElementById('ete').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    document.getElementById('dis').textContent = `${dis.toFixed(1)} NM`;
+  }
+  setInterval(tickInstruments, 1000);
+
+  /* ============================================================
+     PRETEXT: compute correct heights for text that reflows
+     Applies to every [data-pretext] element.
+     ============================================================ */
+  await document.fonts.ready;
+
+  const prepared = new Map();
+
+  function preparePass() {
+    document.querySelectorAll('[data-pretext]').forEach(el => {
+      const cs = getComputedStyle(el);
+      const fontFamily = cs.fontFamily;
+      const fontSize = cs.fontSize;
+      const fontWeight = cs.fontWeight;
+      const font = `${fontWeight} ${fontSize} ${fontFamily}`;
+      const text = el.textContent.trim().replace(/\s+/g, ' ');
+      try {
+        prepared.set(el, { handle: prepare(text, font), lineHeight: parseFloat(cs.lineHeight) || (parseFloat(fontSize) * 1.5) });
+      } catch (e) {
+        // If prepare fails for any reason, let the browser handle that element naturally.
+        prepared.set(el, null);
+      }
+    });
+  }
+
+  function relayout() {
+    for (const [el, p] of prepared) {
+      if (!p) continue;
+      try {
+        const width = el.clientWidth;
+        if (width <= 0) continue;
+        const { height } = layout(p.handle, width, p.lineHeight);
+        el.style.minHeight = `${Math.ceil(height)}px`;
+      } catch (e) {
+        // ignore individual failures; leave element to natural flow
+      }
+    }
+  }
+
+  preparePass();
+  relayout();
+
+  /* Re-layout on resize, container changes, font swap */
+  const ro = new ResizeObserver(() => relayout());
+  ro.observe(document.body);
+
+  /* If fonts swap in late, re-prepare once */
+  document.fonts.addEventListener('loadingdone', () => {
+    preparePass();
+    relayout();
+  });
+</script>
+
+</body>
+</html>
