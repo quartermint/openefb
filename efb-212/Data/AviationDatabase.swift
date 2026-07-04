@@ -357,11 +357,13 @@ final class AviationDatabase: @unchecked Sendable {
         var j = polygon.count - 1
 
         for i in 0..<polygon.count {
-            let xi = polygon[i].longitude, yi = polygon[i].latitude
-            let xj = polygon[j].longitude, yj = polygon[j].latitude
+            let xi: Double = polygon[i].longitude, yi: Double = polygon[i].latitude
+            let xj: Double = polygon[j].longitude, yj: Double = polygon[j].latitude
 
-            let intersect = ((yi > point.latitude) != (yj > point.latitude)) &&
-                (point.longitude < (xj - xi) * (point.latitude - yi) / (yj - yi) + xi)
+            let straddlesLatitude: Bool = (yi > point.latitude) != (yj > point.latitude)
+            let slope: Double = (xj - xi) * (point.latitude - yi) / (yj - yi)
+            let crossingLongitude: Double = slope + xi
+            let intersect: Bool = straddlesLatitude && (point.longitude < crossingLongitude)
 
             if intersect {
                 inside.toggle()
