@@ -24,3 +24,6 @@ Packages/
 
 # Archived old code (pre-@Observable rewrite reference)
 _archive/
+
+# gstack local artifacts
+.gstack/
